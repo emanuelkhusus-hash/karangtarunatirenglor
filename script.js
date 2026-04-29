@@ -48,7 +48,7 @@ function checkSession() {
 async function handleAuth(e) {
     e.preventDefault();
     const name = document.getElementById('reg-name').value;
-    const id = document.getElementById('login-id').value;
+    const password = document.getElementById('login-id').value;
 
     const btn = document.getElementById('btn-login');
     const originalText = btn.innerHTML;
@@ -56,7 +56,7 @@ async function handleAuth(e) {
     btn.innerHTML = '<div class="spinner small"></div>';
 
     try {
-        const response = await fetch(`${CONFIG.API_URL}?action=login&id=${id}&nama=${encodeURIComponent(name)}`);
+        const response = await fetch(`${CONFIG.API_URL}?action=login&nama=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`);
         const result = await response.json();
 
         if (result.status === 'success') {
@@ -103,11 +103,31 @@ function showMainScreen() {
     // Show/Hide Admin Button (Post Button)
     if (['Admin', 'Ketua', 'Sekretaris', 'Bendahara'].includes(currentUser.jabatan)) {
         adminActions.classList.remove('hidden');
+        checkNotifications(); // Cek notifikasi jika admin/pengurus
     } else {
         adminActions.classList.add('hidden');
     }
 
     fetchAnnouncements();
+}
+
+async function checkNotifications() {
+    if (currentUser.jabatan !== 'Admin') return;
+    
+    try {
+        const response = await fetch(`${CONFIG.API_URL}?action=getMembers`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            const pendingCount = result.data.filter(m => m.status === 'pending').length;
+            const badge = document.getElementById('member-badge');
+            if (pendingCount > 0) {
+                badge.textContent = pendingCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    } catch (e) { console.error("Notify error", e); }
 }
 
 function logout() {
