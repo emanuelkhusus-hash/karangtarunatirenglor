@@ -179,12 +179,36 @@ function renderAnnouncements(data) {
         <div class="announcement-item" onclick="showDetail(${index})">
             <div class="item-header">
                 <span class="author">${item.pengirim_nama} (${item.pengirim_jabatan})</span>
-                <span class="date">${item.hari} ${item.bulan}</span>
+                <div class="header-right">
+                    <span class="date">${item.hari} ${item.bulan}</span>
+                    ${currentUser.jabatan === 'Admin' ? `
+                        <button onclick="event.stopPropagation(); deletePost('${item.timestamp}')" class="btn-delete-post" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
             </div>
             <h4>${item.judul}</h4>
             <p>${item.isi}</p>
         </div>
     `).join('');
+}
+
+async function deletePost(timestamp) {
+    if (!confirm('Hapus pengumuman ini secara permanen?')) return;
+    
+    try {
+        const response = await fetch(`${CONFIG.API_URL}?action=deleteAnnouncement&timestamp=${encodeURIComponent(timestamp)}`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Pengumuman dihapus!');
+            fetchAnnouncements();
+        } else {
+            alert('Gagal: ' + result.message);
+        }
+    } catch (e) {
+        alert('Gagal menghapus pengumuman.');
+    }
 }
 
 async function handlePost(e) {
