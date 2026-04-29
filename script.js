@@ -56,7 +56,14 @@ async function handleAuth(e) {
     btn.innerHTML = '<div class="spinner small"></div>';
 
     try {
-        const response = await fetch(`${CONFIG.API_URL}?action=login&nama=${encodeURIComponent(name)}&password=${encodeURIComponent(password)}`);
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'login',
+                nama: name,
+                password: password
+            })
+        });
         const result = await response.json();
 
         if (result.status === 'success') {
