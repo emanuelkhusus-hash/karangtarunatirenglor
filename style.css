@@ -29,7 +29,9 @@ body {
 }
 
 /* Utilities */
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 /* Screens */
 .screen {
@@ -63,8 +65,15 @@ body {
 }
 
 @keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .auth-header {
@@ -126,7 +135,7 @@ body {
     color: var(--text-muted);
 }
 
-.input-wrapper input, 
+.input-wrapper input,
 .input-group input,
 .input-group textarea {
     width: 100%;
@@ -139,7 +148,7 @@ body {
     outline: none;
 }
 
-.input-group input, 
+.input-group input,
 .input-group textarea {
     padding-left: 15px;
 }
@@ -344,6 +353,7 @@ body {
     color: var(--text-muted);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -373,10 +383,19 @@ body {
     font-weight: 700;
 }
 
-.status-tag.pending { background: #fef3c7; color: #d97706; }
-.status-tag.aktif { background: #dcfce7; color: #16a34a; }
+.status-tag.pending {
+    background: #fef3c7;
+    color: #d97706;
+}
 
-.is-pending { border-left-color: #f59e0b !important; }
+.status-tag.aktif {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.is-pending {
+    border-left-color: #f59e0b !important;
+}
 
 .btn-approve {
     width: 100%;
@@ -407,8 +426,15 @@ body {
     margin-bottom: 20px;
 }
 
-.pending-screen h3 { margin-bottom: 15px; }
-.pending-screen p { color: var(--text-muted); margin-bottom: 25px; line-height: 1.6; }
+.pending-screen h3 {
+    margin-bottom: 15px;
+}
+
+.pending-screen p {
+    color: var(--text-muted);
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
 
 /* Floating Action Button */
 .fab-btn {
@@ -490,7 +516,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     display: none;
     justify-content: center;
@@ -508,8 +534,13 @@ body {
 }
 
 @keyframes slideInBottom {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 .modal-header {
@@ -570,7 +601,9 @@ body {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Desktop Responsive */
@@ -578,6 +611,7 @@ body {
     .modal-overlay {
         align-items: center;
     }
+
     .modal-content {
         border-radius: var(--radius-lg);
         margin: 20px;
