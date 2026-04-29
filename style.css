@@ -348,6 +348,23 @@ body {
     overflow: hidden;
 }
 
+.admin-tools {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.role-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--primary);
+    background: #f0f7ff;
+    color: var(--primary);
+    font-weight: 600;
+    outline: none;
+}
+
 /* Floating Action Button */
 .fab-btn {
     position: fixed;
