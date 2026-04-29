@@ -465,6 +465,20 @@ body {
     color: var(--primary);
 }
 
+.badge-notify {
+    position: absolute;
+    top: 5px;
+    right: 15%;
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    border: 2px solid white;
+}
+
 .nav-item i {
     font-size: 1.2rem;
 }
