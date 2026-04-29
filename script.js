@@ -92,6 +92,10 @@ function showMainScreen() {
     mainSection.classList.add('active');
     
     // Update Profile UI
+    document.getElementById('display-name').textContent = currentUser.nama;
+    document.getElementById('display-role').textContent = currentUser.jabatan;
+    document.getElementById('user-avatar').textContent = currentUser.nama.charAt(0).toUpperCase();
+
     // Check Status
     if (currentUser.status === 'pending') {
         announcementList.innerHTML = `
