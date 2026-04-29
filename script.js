@@ -1,7 +1,7 @@
 // Configuration
 const CONFIG = {
     // URL API dari Google Apps Script
-    API_URL: 'https://script.google.com/macros/s/AKfycbzGBzDebA21dTrBKKma2AQ7QkZYubRnnLP6B21vB1aOLbfy9HfBIdNrJzxebeIfD2oe/exec' 
+    API_URL: 'https://script.google.com/macros/s/AKfycbzGBzDebA21dTrBKKma2AQ7QkZYubRnnLP6B21vB1aOLbfy9HfBIdNrJzxebeIfD2oe/exec'
 };
 
 // State Management
@@ -90,7 +90,7 @@ function showAuthScreen() {
 function showMainScreen() {
     authSection.classList.remove('active');
     mainSection.classList.add('active');
-    
+
     // Update Profile UI
     document.getElementById('display-name').textContent = currentUser.nama;
     document.getElementById('display-role').textContent = currentUser.jabatan;
@@ -124,7 +124,7 @@ function showMainScreen() {
 
 async function checkNotifications() {
     if (currentUser.jabatan !== 'Admin') return;
-    
+
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getMembers`);
         const result = await response.json();
@@ -152,11 +152,11 @@ function logout() {
 
 async function fetchAnnouncements() {
     announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Mengambil data...</p></div>';
-    
+
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getAnnouncements`);
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             allAnnouncements = result.data;
             renderAnnouncements(allAnnouncements);
@@ -174,7 +174,7 @@ function renderAnnouncements(data) {
     }
 
     document.getElementById('announcement-count').textContent = `${data.length} Pesan`;
-    
+
     announcementList.innerHTML = data.map((item, index) => `
         <div class="announcement-item" onclick="showDetail(${index})">
             <div class="item-header">
@@ -191,7 +191,7 @@ async function handlePost(e) {
     e.preventDefault();
     const title = document.getElementById('post-title').value;
     const content = document.getElementById('post-content').value;
-    
+
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Mengirim...';
@@ -230,11 +230,11 @@ async function handlePost(e) {
 
 async function fetchMembers() {
     announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat daftar anggota...</p></div>';
-    
+
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getMembers`);
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             allMembers = result.data;
             renderMembers(allMembers);
@@ -247,7 +247,7 @@ async function fetchMembers() {
 function renderMembers(data) {
     document.getElementById('announcement-count').textContent = `${data.length} Anggota`;
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
-    
+
     announcementList.innerHTML = data.map(member => `
         <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}">
             <div class="item-header">
@@ -280,7 +280,7 @@ function renderMembers(data) {
 
 async function approveUser(userId) {
     if (!confirm('Setujui anggota ini?')) return;
-    
+
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
@@ -327,16 +327,16 @@ function setupEventListeners() {
     authForm.addEventListener('submit', handleAuth);
     btnLogout.addEventListener('click', logout);
     document.getElementById('post-form').addEventListener('submit', handlePost);
-    
+
     // Tab Navigation
     bottomNavItems.forEach(item => {
         item.addEventListener('click', () => {
             const target = item.getAttribute('data-target');
-            
+
             // UI Toggle
             bottomNavItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-            
+
             // Logic Switch
             if (target === 'home') {
                 document.querySelector('.filter-bar').classList.remove('hidden');
@@ -359,7 +359,7 @@ function setupEventListeners() {
     // Modal Events
     document.getElementById('btn-add-post').onclick = () => openModal('modal-post');
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
-    modalOverlay.onclick = (e) => { if(e.target === modalOverlay) closeModal(); };
+    modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
 }
 
 function applyFilters() {
@@ -404,6 +404,6 @@ function showDetail(index) {
     document.getElementById('detail-date').textContent = `${item.hari} ${item.bulan}`;
     document.getElementById('detail-title').textContent = item.judul;
     document.getElementById('detail-body').textContent = item.isi;
-    
+
     openModal('modal-detail');
 }
