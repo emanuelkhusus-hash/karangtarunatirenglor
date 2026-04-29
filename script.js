@@ -1,7 +1,6 @@
 // Configuration
 const CONFIG = {
-    // URL API dari Google Apps Script
-    API_URL: 'https://script.google.com/macros/s/AKfycbzGBzDebA21dTrBKKma2AQ7QkZYubRnnLP6B21vB1aOLbfy9HfBIdNrJzxebeIfD2oe/exec'
+    API_URL: 'https://script.google.com/macros/s/AKfycbzGBzDebA21dTrBKKma2AQ7QkZYubRnnLP6B21vB1aOLbfy9HfBIdNrJzxebeIfD2oe/exec' 
 };
 
 // State Management
@@ -15,16 +14,10 @@ const authSection = document.getElementById('auth-section');
 const mainSection = document.getElementById('main-section');
 const authForm = document.getElementById('auth-form');
 const announcementList = document.getElementById('announcement-list');
-const memberList = document.getElementById('member-list'); // Akan ditambahkan di HTML
 const adminActions = document.getElementById('admin-actions');
 const modalOverlay = document.getElementById('modal-overlay');
 const btnLogout = document.getElementById('btn-logout');
 const bottomNavItems = document.querySelectorAll('.nav-item');
-const contentSections = {
-    home: document.querySelector('.announcement-container'),
-    members: null, // Akan dibuat dinamis
-    profile: null
-};
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,7 +67,6 @@ async function handleAuth(e) {
             alert('Gagal login: ' + result.message);
         }
     } catch (error) {
-        console.error('Error:', error);
         alert('Terjadi kesalahan koneksi ke server.');
     } finally {
         btn.disabled = false;
@@ -88,21 +80,23 @@ function showAuthScreen() {
 }
 
 function showMainScreen() {
+    if (!currentUser) return showAuthScreen();
+    
     authSection.classList.remove('active');
     mainSection.classList.add('active');
-
+    
     // Update Profile UI
     document.getElementById('display-name').textContent = currentUser.nama;
     document.getElementById('display-role').textContent = currentUser.jabatan;
     document.getElementById('user-avatar').textContent = currentUser.nama.charAt(0).toUpperCase();
 
-    // Check Status
+    // Check Status Pending
     if (currentUser.status === 'pending') {
         announcementList.innerHTML = `
             <div class="pending-screen">
                 <i class="fas fa-clock"></i>
                 <h3>Akun Menunggu Persetujuan</h3>
-                <p>Halo ${currentUser.nama}, pendaftaran Anda sedang diproses oleh Admin. Mohon tunggu hingga akun Anda disetujui untuk melihat pengumuman.</p>
+                <p>Halo ${currentUser.nama}, pendaftaran Anda sedang diproses oleh Admin.</p>
                 <button onclick="location.reload()" class="btn-primary">Cek Status</button>
             </div>
         `;
@@ -111,10 +105,13 @@ function showMainScreen() {
         return;
     }
 
-    // Show/Hide Admin Button (Post Button)
-    if (['Admin', 'Ketua', 'Sekretaris', 'Bendahara'].includes(currentUser.jabatan)) {
+    // Role Check (Case Insensitive)
+    const role = currentUser.jabatan.toLowerCase().trim();
+    const isPowerUser = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
+
+    if (isPowerUser) {
         adminActions.classList.remove('hidden');
-        checkNotifications(); // Cek notifikasi jika admin/pengurus
+        if (role === 'admin') checkNotifications();
     } else {
         adminActions.classList.add('hidden');
     }
@@ -123,8 +120,6 @@ function showMainScreen() {
 }
 
 async function checkNotifications() {
-    if (currentUser.jabatan !== 'Admin') return;
-
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getMembers`);
         const result = await response.json();
@@ -138,7 +133,7 @@ async function checkNotifications() {
                 badge.classList.add('hidden');
             }
         }
-    } catch (e) { console.error("Notify error", e); }
+    } catch (e) { console.error(e); }
 }
 
 function logout() {
@@ -152,28 +147,26 @@ function logout() {
 
 async function fetchAnnouncements() {
     announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Mengambil data...</p></div>';
-
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getAnnouncements`);
         const result = await response.json();
-
         if (result.status === 'success') {
             allAnnouncements = result.data;
             renderAnnouncements(allAnnouncements);
         }
     } catch (error) {
-        announcementList.innerHTML = '<p class="error-msg">Gagal memuat data. Periksa koneksi Anda.</p>';
+        announcementList.innerHTML = '<p class="error-msg">Gagal memuat data.</p>';
     }
 }
 
 function renderAnnouncements(data) {
+    document.getElementById('announcement-count').textContent = `${data.length} Pesan`;
     if (data.length === 0) {
-        announcementList.innerHTML = '<div class="empty-state"><i class="fas fa-bullhorn"></i><p>Belum ada pengumuman.</p></div>';
-        document.getElementById('announcement-count').textContent = '0 Pesan';
+        announcementList.innerHTML = '<div class="empty-state"><p>Belum ada pengumuman.</p></div>';
         return;
     }
 
-    document.getElementById('announcement-count').textContent = `${data.length} Pesan`;
+    const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
     announcementList.innerHTML = data.map((item, index) => `
         <div class="announcement-item" onclick="showDetail(${index})">
@@ -181,8 +174,8 @@ function renderAnnouncements(data) {
                 <span class="author">${item.pengirim_nama} (${item.pengirim_jabatan})</span>
                 <div class="header-right">
                     <span class="date">${item.hari} ${item.bulan}</span>
-                    ${currentUser.jabatan === 'Admin' ? `
-                        <button onclick="event.stopPropagation(); deletePost('${item.timestamp}')" class="btn-delete-post" title="Hapus">
+                    ${isAdmin ? `
+                        <button onclick="event.stopPropagation(); deletePost('${item.timestamp}')" class="btn-delete-post">
                             <i class="fas fa-trash"></i>
                         </button>
                     ` : ''}
@@ -195,27 +188,19 @@ function renderAnnouncements(data) {
 }
 
 async function deletePost(timestamp) {
-    if (!confirm('Hapus pengumuman ini secara permanen?')) return;
-    
+    if (!confirm('Hapus pengumuman ini?')) return;
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=deleteAnnouncement&timestamp=${encodeURIComponent(timestamp)}`);
         const result = await response.json();
         if (result.status === 'success') {
-            alert('Pengumuman dihapus!');
+            alert('Terhapus!');
             fetchAnnouncements();
-        } else {
-            alert('Gagal: ' + result.message);
         }
-    } catch (e) {
-        alert('Gagal menghapus pengumuman.');
-    }
+    } catch (e) { alert('Gagal menghapus.'); }
 }
 
 async function handlePost(e) {
     e.preventDefault();
-    const title = document.getElementById('post-title').value;
-    const content = document.getElementById('post-content').value;
-
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Mengirim...';
@@ -224,8 +209,8 @@ async function handlePost(e) {
         action: 'postAnnouncement',
         nama: currentUser.nama,
         jabatan: currentUser.jabatan,
-        judul: title,
-        isi: content
+        judul: document.getElementById('post-title').value,
+        isi: document.getElementById('post-content').value
     };
 
     try {
@@ -234,43 +219,37 @@ async function handlePost(e) {
             body: JSON.stringify(payload)
         });
         const result = await response.json();
-
         if (result.status === 'success') {
             closeModal();
             fetchAnnouncements();
             e.target.reset();
-        } else {
-            alert('Gagal mengirim: ' + result.message);
         }
     } catch (error) {
-        alert('Kesalahan server.');
+        alert('Gagal mengirim.');
     } finally {
         btn.disabled = false;
         btn.textContent = 'Kirim Pengumuman';
     }
 }
 
-// --- Member Management Functions ---
+// --- Member Management ---
 
 async function fetchMembers() {
     announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat daftar anggota...</p></div>';
-
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getMembers`);
         const result = await response.json();
-
         if (result.status === 'success') {
             allMembers = result.data;
             renderMembers(allMembers);
         }
-    } catch (error) {
-        console.error(error);
-    }
+    } catch (error) { console.error(error); }
 }
 
 function renderMembers(data) {
     document.getElementById('announcement-count').textContent = `${data.length} Anggota`;
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
+    const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
     announcementList.innerHTML = data.map(member => `
         <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}">
@@ -279,20 +258,17 @@ function renderMembers(data) {
                 <span class="status-tag ${member.status}">${member.status === 'pending' ? 'Menunggu' : 'Aktif'}</span>
             </div>
             <h4>${member.nama}</h4>
-            <p>${member.no_hp}</p>
-            
-            ${currentUser.jabatan === 'Admin' ? `
+            <p>Password: ${member.password}</p>
+            ${isAdmin ? `
                 <div class="admin-tools">
                     ${member.status === 'pending' ? `
-                        <button onclick="approveUser('${member.id}')" class="btn-approve">
-                            <i class="fas fa-check"></i> Setujui Anggota
-                        </button>
+                        <button onclick="approveUser('${member.id}')" class="btn-approve">Setujui</button>
                     ` : `
                         <select onchange="changeRole('${member.id}', this.value)" class="role-select">
                             <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
+                            <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
                             <option value="Sekretaris" ${member.jabatan === 'Sekretaris' ? 'selected' : ''}>Sekretaris</option>
                             <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
-                            <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
                             <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
                         </select>
                     `}
@@ -304,45 +280,32 @@ function renderMembers(data) {
 
 async function approveUser(userId) {
     if (!confirm('Setujui anggota ini?')) return;
-
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'approveUser',
-                targetUserId: userId
-            })
+            body: JSON.stringify({ action: 'approveUser', targetUserId: userId })
         });
         const result = await response.json();
         if (result.status === 'success') {
-            alert('Anggota berhasil disetujui!');
+            alert('Berhasil disetujui!');
             fetchMembers();
         }
-    } catch (error) {
-        alert('Gagal menyetujui anggota.');
-    }
+    } catch (e) { alert('Gagal.'); }
 }
 
 async function changeRole(userId, newRole) {
-    if (!confirm(`Ubah jabatan menjadi ${newRole}?`)) return;
-
+    if (!confirm(`Ubah jabatan ke ${newRole}?`)) return;
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'updateRole',
-                targetUserId: userId,
-                newRole: newRole
-            })
+            body: JSON.stringify({ action: 'updateRole', targetUserId: userId, newRole: newRole })
         });
         const result = await response.json();
         if (result.status === 'success') {
-            alert('Jabatan berhasil diperbarui!');
+            alert('Jabatan diperbarui!');
             fetchMembers();
         }
-    } catch (error) {
-        alert('Gagal update jabatan.');
-    }
+    } catch (e) { alert('Gagal.'); }
 }
 
 // --- UI Helpers ---
@@ -351,17 +314,13 @@ function setupEventListeners() {
     authForm.addEventListener('submit', handleAuth);
     btnLogout.addEventListener('click', logout);
     document.getElementById('post-form').addEventListener('submit', handlePost);
-
-    // Tab Navigation
+    
     bottomNavItems.forEach(item => {
         item.addEventListener('click', () => {
             const target = item.getAttribute('data-target');
-
-            // UI Toggle
             bottomNavItems.forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-
-            // Logic Switch
+            
             if (target === 'home') {
                 document.querySelector('.filter-bar').classList.remove('hidden');
                 document.querySelector('.section-header h3').textContent = 'Pengumuman Terbaru';
@@ -369,18 +328,11 @@ function setupEventListeners() {
             } else if (target === 'members') {
                 document.querySelector('.filter-bar').classList.add('hidden');
                 fetchMembers();
-            } else if (target === 'profile') {
-                alert('Fitur Profil Segera Hadir!');
             }
         });
     });
 
-    // Search & Filters
     document.getElementById('search-announcement').addEventListener('input', applyFilters);
-    document.getElementById('filter-sender').addEventListener('change', applyFilters);
-    document.getElementById('filter-month').addEventListener('change', applyFilters);
-
-    // Modal Events
     document.getElementById('btn-add-post').onclick = () => openModal('modal-post');
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
@@ -388,25 +340,18 @@ function setupEventListeners() {
 
 function applyFilters() {
     const searchTerm = document.getElementById('search-announcement').value.toLowerCase();
-    const sender = document.getElementById('filter-sender').value;
-    const month = document.getElementById('filter-month').value;
-
-    const filtered = allAnnouncements.filter(item => {
-        const matchesSearch = item.judul.toLowerCase().includes(searchTerm) || item.isi.toLowerCase().includes(searchTerm);
-        const matchesSender = sender === 'all' || item.pengirim_jabatan === sender;
-        const matchesMonth = month === 'all' || item.bulan === month;
-        return matchesSearch && matchesSender && matchesMonth;
-    });
-
+    const filtered = allAnnouncements.filter(item => 
+        item.judul.toLowerCase().includes(searchTerm) || item.isi.toLowerCase().includes(searchTerm)
+    );
     renderAnnouncements(filtered);
 }
 
 function populateMonthFilter() {
     const select = document.getElementById('filter-month');
+    if (!select) return;
     months.forEach(m => {
         const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m;
+        opt.value = m; opt.textContent = m;
         select.appendChild(opt);
     });
 }
@@ -423,11 +368,10 @@ function closeModal() {
 
 function showDetail(index) {
     const item = allAnnouncements[index];
-    document.getElementById('detail-avatar').textContent = item.pengirim_nama.charAt(0).toUpperCase();
+    document.getElementById('detail-avatar').textContent = (item.pengirim_nama || "?").charAt(0).toUpperCase();
     document.getElementById('detail-sender').textContent = `${item.pengirim_nama} (${item.pengirim_jabatan})`;
     document.getElementById('detail-date').textContent = `${item.hari} ${item.bulan}`;
     document.getElementById('detail-title').textContent = item.judul;
     document.getElementById('detail-body').textContent = item.isi;
-
     openModal('modal-detail');
 }
