@@ -32,10 +32,10 @@
                         </div>
                     </div>
                     <div class="input-group">
-                        <label for="login-id">Nomor WhatsApp / ID</label>
+                        <label for="login-id">Password Akun</label>
                         <div class="input-wrapper">
-                            <i class="fab fa-whatsapp"></i>
-                            <input type="number" id="login-id" placeholder="Contoh: 08123456789" required>
+                            <i class="fas fa-lock"></i>
+                            <input type="password" id="login-id" placeholder="Masukkan password..." required>
                         </div>
                     </div>
                     <button type="submit" id="btn-login" class="btn-primary">
@@ -119,6 +119,7 @@
                 <button class="nav-item" id="nav-members" data-target="members">
                     <i class="fas fa-address-book"></i>
                     <span>Anggota</span>
+                    <span id="member-badge" class="badge-notify hidden">0</span>
                 </button>
                 <button class="nav-item" data-target="profile">
                     <i class="fas fa-user-circle"></i>
