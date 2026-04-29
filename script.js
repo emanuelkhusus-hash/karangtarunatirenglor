@@ -85,12 +85,22 @@ function showMainScreen() {
     mainSection.classList.add('active');
     
     // Update Profile UI
-    document.getElementById('display-name').textContent = currentUser.nama;
-    document.getElementById('display-role').textContent = currentUser.jabatan;
-    document.getElementById('user-avatar').textContent = currentUser.nama.charAt(0).toUpperCase();
+    // Check Status
+    if (currentUser.status === 'pending') {
+        announcementList.innerHTML = `
+            <div class="pending-screen">
+                <i class="fas fa-clock"></i>
+                <h3>Akun Menunggu Persetujuan</h3>
+                <p>Halo ${currentUser.nama}, pendaftaran Anda sedang diproses oleh Admin. Mohon tunggu hingga akun Anda disetujui untuk melihat pengumuman.</p>
+                <button onclick="location.reload()" class="btn-primary">Cek Status</button>
+            </div>
+        `;
+        document.getElementById('display-role').textContent = 'Pending Approval';
+        adminActions.classList.add('hidden');
+        return;
+    }
 
     // Show/Hide Admin Button (Post Button)
-    // Pengurus (Ketua, Sekre, Bendahara) DAN Admin bisa posting
     if (['Admin', 'Ketua', 'Sekretaris', 'Bendahara'].includes(currentUser.jabatan)) {
         adminActions.classList.remove('hidden');
     } else {
@@ -208,25 +218,54 @@ function renderMembers(data) {
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
     
     announcementList.innerHTML = data.map(member => `
-        <div class="announcement-item member-item">
+        <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}">
             <div class="item-header">
                 <span class="author">${member.jabatan}</span>
-                <span class="date">${member.no_hp}</span>
+                <span class="status-tag ${member.status}">${member.status === 'pending' ? 'Menunggu' : 'Aktif'}</span>
             </div>
             <h4>${member.nama}</h4>
+            <p>${member.no_hp}</p>
+            
             ${currentUser.jabatan === 'Admin' ? `
                 <div class="admin-tools">
-                    <select onchange="changeRole('${member.id}', this.value)" class="role-select">
-                        <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
-                        <option value="Sekretaris" ${member.jabatan === 'Sekretaris' ? 'selected' : ''}>Sekretaris</option>
-                        <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
-                        <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
-                        <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
-                    </select>
+                    ${member.status === 'pending' ? `
+                        <button onclick="approveUser('${member.id}')" class="btn-approve">
+                            <i class="fas fa-check"></i> Setujui Anggota
+                        </button>
+                    ` : `
+                        <select onchange="changeRole('${member.id}', this.value)" class="role-select">
+                            <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
+                            <option value="Sekretaris" ${member.jabatan === 'Sekretaris' ? 'selected' : ''}>Sekretaris</option>
+                            <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
+                            <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
+                            <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    `}
                 </div>
             ` : ''}
         </div>
     `).join('');
+}
+
+async function approveUser(userId) {
+    if (!confirm('Setujui anggota ini?')) return;
+    
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'approveUser',
+                targetUserId: userId
+            })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Anggota berhasil disetujui!');
+            fetchMembers();
+        }
+    } catch (error) {
+        alert('Gagal menyetujui anggota.');
+    }
 }
 
 async function changeRole(userId, newRole) {
