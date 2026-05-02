@@ -254,7 +254,7 @@ function renderAnnouncements(data) {
     announcementList.innerHTML = data.map((item, index) => `
         <div class="announcement-item" onclick="showDetail(${index})">
             <div class="item-header">
-                <span class="author">${item.pengirim_nama} (${item.pengirim_jabatan})</span>
+                <span class="author">${item.pengirim_nama || item.nama || 'Anonim'} (${item.pengirim_jabatan || item.jabatan || 'Anggota'})</span>
                 <div class="header-right">
                     <span class="date">${item.hari} ${item.bulan}</span>
                     ${isAdmin ? `
@@ -451,8 +451,11 @@ function closeModal() {
 
 function showDetail(index) {
     const item = allAnnouncements[index];
-    document.getElementById('detail-avatar').textContent = (item.pengirim_nama || "?").charAt(0).toUpperCase();
-    document.getElementById('detail-sender').textContent = `${item.pengirim_nama} (${item.pengirim_jabatan})`;
+    const pengirimNama = item.pengirim_nama || item.nama || 'Anonim';
+    const pengirimJabatan = item.pengirim_jabatan || item.jabatan || 'Anggota';
+    
+    document.getElementById('detail-avatar').textContent = pengirimNama.charAt(0).toUpperCase();
+    document.getElementById('detail-sender').textContent = `${pengirimNama} (${pengirimJabatan})`;
     document.getElementById('detail-date').textContent = `${item.hari} ${item.bulan}`;
     document.getElementById('detail-title').textContent = item.judul;
     document.getElementById('detail-body').textContent = item.isi;
