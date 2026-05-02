@@ -251,12 +251,14 @@ function renderAnnouncements(data) {
 
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
-    announcementList.innerHTML = data.map((item, index) => `
+    announcementList.innerHTML = data.map((item, index) => {
+        const dateDisplay = isNaN(item.hari) ? `${item.bulan} ${item.hari}` : `${item.hari} ${item.bulan}`;
+        return `
         <div class="announcement-item" onclick="showDetail(${index})">
             <div class="item-header">
                 <span class="author">${item.pengirim_nama || item.nama || 'Anonim'} (${item.pengirim_jabatan || item.jabatan || 'Anggota'})</span>
                 <div class="header-right">
-                    <span class="date">${item.hari} ${item.bulan}</span>
+                    <span class="date">${dateDisplay}</span>
                     ${isAdmin ? `
                         <button onclick="event.stopPropagation(); deletePost('${item.timestamp}')" class="btn-delete-post">
                             <i class="fas fa-trash"></i>
@@ -267,7 +269,7 @@ function renderAnnouncements(data) {
             <h4>${item.judul}</h4>
             <p>${item.isi}</p>
         </div>
-    `).join('');
+    `; }).join('');
 }
 
 async function deletePost(timestamp) {
@@ -492,11 +494,22 @@ function applyFilters() {
     const filterMonth = document.getElementById('filter-month').value;
 
     const filtered = allAnnouncements.filter(item => {
+        // 1. Filter Kata Kunci
         const matchesSearch = item.judul.toLowerCase().includes(searchTerm) || 
                               item.isi.toLowerCase().includes(searchTerm);
+        
+        // 2. Filter Pengirim
         const senderJabatan = (item.pengirim_jabatan || item.jabatan || "").toLowerCase().trim();
         const matchesSender = filterSender === 'all' || senderJabatan === filterSender.toLowerCase().trim();
-        const matchesMonth = filterMonth === 'all' || item.bulan === filterMonth;
+        
+        // 3. Filter Bulan (Dibuat lebih kuat/robust)
+        const valHari = String(item.hari || "").trim();
+        const valBulan = String(item.bulan || "").trim();
+        // Cek apakah filter bulan ada di kolom hari atau kolom bulan (mengantisipasi data terbalik)
+        const matchesMonth = filterMonth === 'all' || 
+                             valBulan === filterMonth || 
+                             valHari === filterMonth;
+
         return matchesSearch && matchesSender && matchesMonth;
     });
     
