@@ -492,22 +492,24 @@ function applyFilters() {
     const filterMonth = document.getElementById('filter-month').value;
 
     const filtered = allAnnouncements.filter(item => {
-        // 1. Filter by Search Term
         const matchesSearch = item.judul.toLowerCase().includes(searchTerm) || 
                               item.isi.toLowerCase().includes(searchTerm);
-        
-        // 2. Filter by Sender (Jabatan)
         const senderJabatan = (item.pengirim_jabatan || item.jabatan || "").toLowerCase().trim();
         const matchesSender = filterSender === 'all' || senderJabatan === filterSender.toLowerCase().trim();
-        
-        // 3. Filter by Month
         const matchesMonth = filterMonth === 'all' || item.bulan === filterMonth;
-
         return matchesSearch && matchesSender && matchesMonth;
     });
     
     renderAnnouncements(filtered);
 }
+
+function resetFilters() {
+    document.getElementById('search-announcement').value = '';
+    document.getElementById('filter-sender').value = 'all';
+    document.getElementById('filter-month').value = 'all';
+    fetchAnnouncements();
+}
+
 
 function populateMonthFilter() {
     const select = document.getElementById('filter-month');
