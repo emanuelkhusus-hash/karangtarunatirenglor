@@ -20,12 +20,13 @@ const btnLogout = document.getElementById('btn-logout');
 const bottomNavItems = document.querySelectorAll('.nav-item');
 
 // Initial Load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     updateSystemYear();
-    checkSession();
+    await checkSession();
     populateMonthFilter();
     setupEventListeners();
 });
+
 
 function updateSystemYear() {
     const year = new Date().getFullYear();
@@ -39,15 +40,41 @@ function updateSystemYear() {
 
 // --- Authentication Functions ---
 
-function checkSession() {
+async function checkSession() {
     const savedUser = localStorage.getItem('kt_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
+        
+        // If status is still pending, try to refresh from server
+        if (currentUser.status === 'pending') {
+            await refreshUserStatus();
+        }
+        
         showMainScreen();
     } else {
         showAuthScreen();
     }
 }
+
+async function refreshUserStatus() {
+    if (!currentUser || !currentUser.password) return;
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'login',
+                nama: currentUser.nama,
+                password: currentUser.password
+            })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            currentUser = { ...result.data, password: currentUser.password };
+            localStorage.setItem('kt_user', JSON.stringify(currentUser));
+        }
+    } catch (e) { console.error("Auto refresh failed", e); }
+}
+
 
 async function handleAuth(e) {
     e.preventDefault();
@@ -71,12 +98,13 @@ async function handleAuth(e) {
         const result = await response.json();
 
         if (result.status === 'success') {
-            currentUser = result.data;
+            currentUser = { ...result.data, password: password };
             localStorage.setItem('kt_user', JSON.stringify(currentUser));
             showMainScreen();
         } else {
             alert('Gagal login: ' + result.message);
         }
+
     } catch (error) {
         alert('Terjadi kesalahan koneksi ke server.');
     } finally {
