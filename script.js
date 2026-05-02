@@ -57,23 +57,41 @@ async function checkSession() {
 }
 
 async function refreshUserStatus() {
-    if (!currentUser || !currentUser.password) return;
+    if (!currentUser) return;
+    
+    // Determine how to check status: Use password (if available) or ID (fallback for old sessions)
+    let payload = { action: 'checkStatusOnly', id: currentUser.id };
+    
+    if (currentUser.password) {
+        payload = {
+            action: 'login',
+            nama: currentUser.nama,
+            password: currentUser.password
+        };
+    }
+
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'login',
-                nama: currentUser.nama,
-                password: currentUser.password
-            })
+            body: JSON.stringify(payload)
         });
         const result = await response.json();
+        
         if (result.status === 'success') {
-            currentUser = { ...result.data, password: currentUser.password };
+            if (payload.action === 'login') {
+                currentUser = { ...result.data, password: currentUser.password };
+            } else {
+                // If using checkStatusOnly, update status and role
+                currentUser.status = result.newStatus;
+                currentUser.jabatan = result.jabatan;
+            }
             localStorage.setItem('kt_user', JSON.stringify(currentUser));
         }
-    } catch (e) { console.error("Auto refresh failed", e); }
+    } catch (e) { 
+        console.error("Auto refresh failed", e); 
+    }
 }
+
 
 
 async function handleAuth(e) {
