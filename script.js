@@ -21,10 +21,21 @@ const bottomNavItems = document.querySelectorAll('.nav-item');
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
+    updateSystemYear();
     checkSession();
     populateMonthFilter();
     setupEventListeners();
 });
+
+function updateSystemYear() {
+    const year = new Date().getFullYear();
+    const yearElements = ['current-year', 'footer-year'];
+    yearElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = year;
+    });
+}
+
 
 // --- Authentication Functions ---
 
