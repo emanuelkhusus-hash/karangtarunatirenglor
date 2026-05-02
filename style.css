@@ -135,9 +135,7 @@ body {
     color: var(--text-muted);
 }
 
-.input-wrapper input,
-.input-group input,
-.input-group textarea {
+.input-wrapper input {
     width: 100%;
     padding: 14px 15px 14px 45px;
     border: 2px solid transparent;
@@ -148,17 +146,27 @@ body {
     outline: none;
 }
 
-.input-group input,
-.input-group textarea {
-    padding-left: 15px;
+.input-group > input,
+.input-group > textarea {
+    width: 100%;
+    padding: 14px 15px;
+    border: 2px solid transparent;
+    background: white;
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    transition: 0.3s;
+    outline: none;
 }
 
+
+/* Standalone inputs focus */
 .input-wrapper input:focus,
-.input-group input:focus,
-.input-group textarea:focus {
+.input-group > input:focus,
+.input-group > textarea:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
+
 
 .btn-primary {
     width: 100%;
