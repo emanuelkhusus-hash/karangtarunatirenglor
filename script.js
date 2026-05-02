@@ -472,16 +472,6 @@ function renderProfile() {
                     </div>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-phone"></i>
-                    <div class="info-content">
-                        <label>Password (No. HP)</label>
-                        <span id="profile-pass">••••••••</span>
-                    </div>
-                    <button onclick="toggleProfilePass()" style="margin-left: auto; background: none; border: none; color: var(--primary); cursor: pointer;">
-                        <i class="fas fa-eye" style="background: none; width: auto; height: auto;"></i>
-                    </button>
-                </div>
-                <div class="info-item">
                     <i class="fas fa-shield-alt"></i>
                     <div class="info-content">
                         <label>Status Akun</label>
@@ -496,14 +486,6 @@ function renderProfile() {
             </button>
         </div>
     `;
-}
-
-let isPassVisible = false;
-function toggleProfilePass() {
-    const passEl = document.getElementById('profile-pass');
-    isPassVisible = !isPassVisible;
-    passEl.textContent = isPassVisible ? currentUser.password : '••••••••';
-    event.currentTarget.querySelector('i').className = isPassVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
 }
 
 function applyFilters() {
