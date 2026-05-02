@@ -57,9 +57,8 @@ async function checkSession() {
 }
 
 async function refreshUserStatus() {
-    if (!currentUser) return;
+    if (!currentUser) return null;
     
-    // Determine how to check status: Use password (if available) or ID (fallback for old sessions)
     let payload = { action: 'checkStatusOnly', id: currentUser.id };
     
     if (currentUser.password) {
@@ -81,33 +80,40 @@ async function refreshUserStatus() {
             if (payload.action === 'login') {
                 currentUser = { ...result.data, password: currentUser.password };
             } else {
-                // If using checkStatusOnly, update status and role
                 currentUser.status = result.newStatus;
                 currentUser.jabatan = result.jabatan;
             }
             localStorage.setItem('kt_user', JSON.stringify(currentUser));
         }
+        return result;
     } catch (e) { 
         console.error("Auto refresh failed", e); 
+        return { status: 'error', message: 'Koneksi gagal' };
     }
 }
-
 
 async function checkStatusManual(btn) {
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
     
-    await refreshUserStatus();
+    const result = await refreshUserStatus();
     
-    if (currentUser.status === 'aktif') {
-        alert("Selamat! Akun Anda sudah disetujui. Halaman akan dimuat ulang.");
-        location.reload();
+    if (result && result.status === 'error') {
+        alert("Gagal mengecek: " + (result.message || "Kesalahan server"));
     } else {
-        alert("Status masih 'pending'. Mohon tunggu persetujuan admin.");
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        const currentStatus = currentUser.status ? currentUser.status.toString().toLowerCase().trim() : 'pending';
+        if (currentStatus === 'aktif') {
+            alert("Selamat! Akun Anda sudah disetujui. Halaman akan dimuat ulang.");
+            location.reload();
+            return;
+        } else {
+            alert("Status saat ini di server: '" + currentStatus + "'. Mohon tunggu persetujuan admin.");
+        }
     }
+    
+    btn.disabled = false;
+    btn.innerHTML = originalText;
 }
 
 
