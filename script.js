@@ -489,23 +489,24 @@ function toggleProfilePass() {
 }
 
 function applyFilters() {
-    const searchTerm = document.getElementById('search-announcement').value.toLowerCase();
+    const searchTerm = document.getElementById('search-announcement').value.toLowerCase().trim();
     const filterSender = document.getElementById('filter-sender').value;
-    const filterMonth = document.getElementById('filter-month').value;
+    const filterMonth = document.getElementById('filter-month').value.toLowerCase().trim();
 
     const filtered = allAnnouncements.filter(item => {
         // 1. Filter Kata Kunci
-        const matchesSearch = item.judul.toLowerCase().includes(searchTerm) || 
+        const matchesSearch = searchTerm === "" || 
+                              item.judul.toLowerCase().includes(searchTerm) || 
                               item.isi.toLowerCase().includes(searchTerm);
         
         // 2. Filter Pengirim
         const senderJabatan = (item.pengirim_jabatan || item.jabatan || "").toLowerCase().trim();
         const matchesSender = filterSender === 'all' || senderJabatan === filterSender.toLowerCase().trim();
         
-        // 3. Filter Bulan (Dibuat lebih kuat/robust)
-        const valHari = String(item.hari || "").trim();
-        const valBulan = String(item.bulan || "").trim();
-        // Cek apakah filter bulan ada di kolom hari atau kolom bulan (mengantisipasi data terbalik)
+        // 3. Filter Bulan (Case Insensitive & Trim)
+        const valHari = String(item.hari || "").toLowerCase().trim();
+        const valBulan = String(item.bulan || "").toLowerCase().trim();
+        
         const matchesMonth = filterMonth === 'all' || 
                              valBulan === filterMonth || 
                              valHari === filterMonth;
@@ -515,6 +516,7 @@ function applyFilters() {
     
     renderAnnouncements(filtered);
 }
+
 
 function resetFilters() {
     document.getElementById('search-announcement').value = '';
