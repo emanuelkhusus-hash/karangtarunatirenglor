@@ -347,7 +347,10 @@ function renderMembers(data) {
             ${isAdmin ? `
                 <div class="admin-tools">
                     ${member.status === 'pending' ? `
-                        <button onclick="approveUser('${member.id}')" class="btn-approve">Setujui</button>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="approveUser('${member.id}')" class="btn-approve" style="flex: 1;">Setujui</button>
+                            <button onclick="rejectUser('${member.id}')" class="btn-reject" style="flex: 1;">Tolak</button>
+                        </div>
                     ` : `
                         <select onchange="changeRole('${member.id}', this.value)" class="role-select">
                             <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
@@ -376,6 +379,21 @@ async function approveUser(userId) {
             fetchMembers();
         }
     } catch (e) { alert('Gagal.'); }
+}
+
+async function rejectUser(userId) {
+    if (!confirm('Tolak pendaftaran ini? Data pengguna akan dihapus.')) return;
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'rejectUser', targetUserId: userId })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Pendaftaran ditolak.');
+            fetchMembers();
+        }
+    } catch (e) { alert('Gagal menolak.'); }
 }
 
 async function changeRole(userId, newRole) {
