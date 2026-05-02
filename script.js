@@ -405,12 +405,21 @@ function setupEventListeners() {
             item.classList.add('active');
             
             if (target === 'home') {
+                document.getElementById('announcement-container').classList.remove('hidden');
+                document.getElementById('profile-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.remove('hidden');
                 document.querySelector('.section-header h3').textContent = 'Pengumuman Terbaru';
                 fetchAnnouncements();
             } else if (target === 'members') {
+                document.getElementById('announcement-container').classList.remove('hidden');
+                document.getElementById('profile-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 fetchMembers();
+            } else if (target === 'profile') {
+                document.getElementById('announcement-container').classList.add('hidden');
+                document.getElementById('profile-section').classList.remove('hidden');
+                document.querySelector('.filter-bar').classList.add('hidden');
+                renderProfile();
             }
         });
     });
@@ -419,6 +428,59 @@ function setupEventListeners() {
     document.getElementById('btn-add-post').onclick = () => openModal('modal-post');
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
+}
+
+function renderProfile() {
+    const profileSection = document.getElementById('profile-section');
+    profileSection.innerHTML = `
+        <div class="profile-card">
+            <div class="profile-avatar-large">
+                ${currentUser.nama.charAt(0).toUpperCase()}
+            </div>
+            <h3>${currentUser.nama}</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">${currentUser.jabatan}</p>
+            
+            <div class="profile-info-list">
+                <div class="info-item">
+                    <i class="fas fa-id-badge"></i>
+                    <div class="info-content">
+                        <label>ID Anggota</label>
+                        <span>${currentUser.id}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-phone"></i>
+                    <div class="info-content">
+                        <label>Password (No. HP)</label>
+                        <span id="profile-pass">••••••••</span>
+                    </div>
+                    <button onclick="toggleProfilePass()" style="margin-left: auto; background: none; border: none; color: var(--primary); cursor: pointer;">
+                        <i class="fas fa-eye" style="background: none; width: auto; height: auto;"></i>
+                    </button>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <div class="info-content">
+                        <label>Status Akun</label>
+                        <span style="color: #16a34a;">${currentUser.status.toUpperCase()}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="logout()" class="btn-logout-alt">
+                <i class="fas fa-sign-out-alt"></i>
+                Keluar Aplikasi
+            </button>
+        </div>
+    `;
+}
+
+let isPassVisible = false;
+function toggleProfilePass() {
+    const passEl = document.getElementById('profile-pass');
+    isPassVisible = !isPassVisible;
+    passEl.textContent = isPassVisible ? currentUser.password : '••••••••';
+    event.currentTarget.querySelector('i').className = isPassVisible ? 'fas fa-eye-slash' : 'fas fa-eye';
 }
 
 function applyFilters() {

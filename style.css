@@ -738,3 +738,116 @@ body {
         margin: 20px;
     }
 }
+
+/* Profile Section */
+#profile-section {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.profile-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 30px;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-card::after {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    background: var(--primary);
+    opacity: 0.05;
+    border-radius: 50%;
+}
+
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 800;
+    border-radius: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+}
+
+.profile-info-list {
+    text-align: left;
+    margin-top: 30px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item i {
+    width: 40px;
+    height: 40px;
+    background: #f8fafc;
+    color: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.info-content label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-content span {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.btn-logout-alt {
+    margin-top: 30px;
+    background: #fff1f2;
+    color: #e11d48;
+    border: none;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: 0.3s;
+}
+
+.btn-logout-alt:hover {
+    background: #ffe4e6;
+    transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
