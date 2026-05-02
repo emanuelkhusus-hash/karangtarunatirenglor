@@ -38,8 +38,9 @@ body {
 /* Screens */
 .screen {
     display: none;
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
+    overflow: hidden;
 }
 
 .screen.active {
@@ -257,13 +258,13 @@ body {
 .top-nav {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
     color: white;
-    padding: 25px 20px 35px;
+    padding: 25px 20px 45px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 110;
+    border-radius: 0 0 35px 35px;
+    flex-shrink: 0;
+    z-index: 10;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
@@ -322,10 +323,13 @@ body {
 }
 
 .content {
-    padding: 15px;
-    padding-bottom: 120px;
+    padding: 0 15px;
+    margin-top: -25px;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    z-index: 20;
 }
 
 /* Filters Sticky */
@@ -334,10 +338,8 @@ body {
     padding: 15px;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
-    margin-bottom: 20px;
-    position: sticky;
-    top: 95px; /* Stay below top-nav */
-    z-index: 105;
+    margin-bottom: 15px;
+    flex-shrink: 0;
     border: 1px solid #f1f5f9;
 }
 
@@ -386,12 +388,28 @@ body {
     background: white;
 }
 
-/* Announcement List */
+/* Announcement List Container */
+.announcement-container {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 120px; /* Space for bottom nav */
+}
+
+/* Hide scrollbar for cleaner look */
+.announcement-container::-webkit-scrollbar {
+    width: 6px;
+}
+.announcement-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+    padding-top: 5px;
 }
 
 .section-header h3 {
@@ -778,6 +796,9 @@ body {
 
 /* Profile Section */
 #profile-section {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 120px;
     animation: fadeIn 0.4s ease-out;
 }
 
