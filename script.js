@@ -425,6 +425,9 @@ function setupEventListeners() {
     });
 
     document.getElementById('search-announcement').addEventListener('input', applyFilters);
+    document.getElementById('filter-sender').addEventListener('change', applyFilters);
+    document.getElementById('filter-month').addEventListener('change', applyFilters);
+    
     document.getElementById('btn-add-post').onclick = () => openModal('modal-post');
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
@@ -485,9 +488,24 @@ function toggleProfilePass() {
 
 function applyFilters() {
     const searchTerm = document.getElementById('search-announcement').value.toLowerCase();
-    const filtered = allAnnouncements.filter(item => 
-        item.judul.toLowerCase().includes(searchTerm) || item.isi.toLowerCase().includes(searchTerm)
-    );
+    const filterSender = document.getElementById('filter-sender').value;
+    const filterMonth = document.getElementById('filter-month').value;
+
+    const filtered = allAnnouncements.filter(item => {
+        // 1. Filter by Search Term
+        const matchesSearch = item.judul.toLowerCase().includes(searchTerm) || 
+                              item.isi.toLowerCase().includes(searchTerm);
+        
+        // 2. Filter by Sender (Jabatan)
+        const senderJabatan = (item.pengirim_jabatan || item.jabatan || "").toLowerCase().trim();
+        const matchesSender = filterSender === 'all' || senderJabatan === filterSender.toLowerCase().trim();
+        
+        // 3. Filter by Month
+        const matchesMonth = filterMonth === 'all' || item.bulan === filterMonth;
+
+        return matchesSearch && matchesSender && matchesMonth;
+    });
+    
     renderAnnouncements(filtered);
 }
 
