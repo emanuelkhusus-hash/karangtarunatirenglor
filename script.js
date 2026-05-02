@@ -93,6 +93,25 @@ async function refreshUserStatus() {
 }
 
 
+async function checkStatusManual(btn) {
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
+    
+    await refreshUserStatus();
+    
+    if (currentUser.status === 'aktif') {
+        alert("Selamat! Akun Anda sudah disetujui. Halaman akan dimuat ulang.");
+        location.reload();
+    } else {
+        alert("Status masih 'pending'. Mohon tunggu persetujuan admin.");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+
+
 
 async function handleAuth(e) {
     e.preventDefault();
@@ -154,13 +173,14 @@ function showMainScreen() {
                 <i class="fas fa-clock"></i>
                 <h3>Akun Menunggu Persetujuan</h3>
                 <p>Halo ${currentUser.nama}, pendaftaran Anda sedang diproses oleh Admin.</p>
-                <button onclick="location.reload()" class="btn-primary">Cek Status</button>
+                <button onclick="checkStatusManual(this)" class="btn-primary">Cek Status Terbaru</button>
             </div>
         `;
         document.getElementById('display-role').textContent = 'Pending Approval';
         adminActions.classList.add('hidden');
         return;
     }
+
 
     // Role Check (Case Insensitive)
     const role = currentUser.jabatan.toLowerCase().trim();
