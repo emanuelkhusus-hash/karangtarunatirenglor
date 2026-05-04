@@ -352,18 +352,42 @@ function renderMembers(data) {
                             <button onclick="rejectUser('${member.id}')" class="btn-reject" style="flex: 1;">Tolak</button>
                         </div>
                     ` : `
-                        <select onchange="changeRole('${member.id}', this.value)" class="role-select">
-                            <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
-                            <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
-                            <option value="Sekretaris" ${member.jabatan === 'Sekretaris' ? 'selected' : ''}>Sekretaris</option>
-                            <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
-                            <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
-                        </select>
+                        <div style="display: flex; gap: 10px; flex-direction: column;">
+                            <select onchange="changeRole('${member.id}', this.value)" class="role-select">
+                                <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
+                                <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
+                                <option value="Sekretaris" ${member.jabatan === 'Sekretaris' ? 'selected' : ''}>Sekretaris</option>
+                                <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
+                                <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                            <button onclick="deleteMember('${member.id}', '${member.nama}')" class="btn-reject" style="background: #fee2e2; color: #ef4444; font-size: 0.75rem; padding: 6px; border: 1px solid #fecaca; border-radius: 8px;">
+                                <i class="fas fa-trash-alt"></i> Hapus Anggota
+                            </button>
+                        </div>
                     `}
                 </div>
             ` : ''}
         </div>
     `).join('');
+}
+
+async function deleteMember(userId, userName) {
+    if (!confirm(`Hapus anggota "${userName}"? Data ini tidak bisa dikembalikan.`)) return;
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'deleteMember', targetUserId: userId })
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Anggota berhasil dihapus.');
+            fetchMembers();
+        } else {
+            alert('Gagal menghapus: ' + result.message);
+        }
+    } catch (e) { 
+        alert('Gagal menghubungi server.'); 
+    }
 }
 
 async function approveUser(userId) {
