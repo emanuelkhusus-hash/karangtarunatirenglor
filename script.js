@@ -7,6 +7,7 @@ const CONFIG = {
 let currentUser = null;
 let allAnnouncements = [];
 let allMembers = [];
+let allFinance = [];
 let months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
 // DOM Elements
@@ -199,6 +200,7 @@ function showMainScreen() {
         adminActions.classList.add('hidden');
     }
 
+    updateFabContext('announcement');
     fetchAnnouncements();
 }
 
@@ -443,6 +445,116 @@ async function changeRole(userId, newRole) {
     } catch (e) { alert('Gagal.'); }
 }
 
+// --- Finance Functions ---
+
+function updateFabContext(context) {
+    const fab = document.getElementById('btn-add-post');
+    const role = currentUser.jabatan.toLowerCase().trim();
+    
+    fab.setAttribute('data-context', context);
+    
+    if (context === 'announcement') {
+        const canPost = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
+        fab.classList.toggle('hidden', !canPost);
+    } else if (context === 'finance') {
+        const canPostFinance = ['admin', 'bendahara'].includes(role);
+        fab.classList.toggle('hidden', !canPostFinance);
+    } else {
+        fab.classList.add('hidden');
+    }
+}
+
+async function fetchFinance() {
+    const list = document.getElementById('finance-list');
+    list.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat data keuangan...</p></div>';
+    
+    try {
+        const response = await fetch(`${CONFIG.API_URL}?action=getFinance`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            allFinance = result.data;
+            renderFinance(allFinance);
+        }
+    } catch (error) {
+        list.innerHTML = '<p class="error-msg">Gagal memuat data keuangan.</p>';
+    }
+}
+
+function renderFinance(data) {
+    const list = document.getElementById('finance-list');
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    if (data.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>Belum ada transaksi.</p></div>';
+        return;
+    }
+
+    list.innerHTML = data.map(item => {
+        const amount = parseInt(item.jumlah);
+        if (item.jenis === 'income') totalIncome += amount;
+        else totalExpense += amount;
+
+        return `
+            <div class="finance-item ${item.jenis}">
+                <div class="finance-info">
+                    <h4>${item.keterangan}</h4>
+                    <p>Oleh: ${item.nama}</p>
+                </div>
+                <div class="finance-amount">
+                    <span class="amount-val">${item.jenis === 'income' ? '+' : '-'}${formatRupiah(amount)}</span>
+                    <span class="finance-date">${item.tanggal}</span>
+                </div>
+            </div>
+        `;
+    }).reverse().join('');
+
+    document.getElementById('total-income').textContent = formatRupiah(totalIncome);
+    document.getElementById('total-expense').textContent = formatRupiah(totalExpense);
+    document.getElementById('total-balance').textContent = formatRupiah(totalIncome - totalExpense);
+}
+
+async function handleFinancePost(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const payload = {
+        action: 'postFinance',
+        nama: currentUser.nama,
+        jenis: document.getElementById('finance-type').value,
+        jumlah: document.getElementById('finance-amount').value,
+        keterangan: document.getElementById('finance-note').value
+    };
+
+    try {
+        const response = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            closeModal();
+            fetchFinance();
+            e.target.reset();
+        }
+    } catch (error) {
+        alert('Gagal menyimpan transaksi.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan Transaksi';
+    }
+}
+
+function formatRupiah(number) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(number);
+}
+
 // --- UI Helpers ---
 
 function setupEventListeners() {
@@ -459,21 +571,35 @@ function setupEventListeners() {
             if (target === 'home') {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
+                document.getElementById('finance-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.remove('hidden');
                 document.getElementById('member-search-container').classList.add('hidden');
                 document.querySelector('.section-header h3').textContent = 'Pengumuman Terbaru';
+                updateFabContext('announcement');
                 fetchAnnouncements();
+            } else if (target === 'finance') {
+                document.getElementById('announcement-container').classList.add('hidden');
+                document.getElementById('profile-section').classList.add('hidden');
+                document.getElementById('finance-section').classList.remove('hidden');
+                document.querySelector('.filter-bar').classList.add('hidden');
+                document.getElementById('member-search-container').classList.add('hidden');
+                updateFabContext('finance');
+                fetchFinance();
             } else if (target === 'members') {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
+                document.getElementById('finance-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.remove('hidden');
+                updateFabContext('none');
                 fetchMembers();
             } else if (target === 'profile') {
                 document.getElementById('announcement-container').classList.add('hidden');
                 document.getElementById('profile-section').classList.remove('hidden');
+                document.getElementById('finance-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.add('hidden');
+                updateFabContext('none');
                 renderProfile();
             }
         });
@@ -483,7 +609,12 @@ function setupEventListeners() {
     document.getElementById('filter-sender').addEventListener('change', applyFilters);
     document.getElementById('filter-month').addEventListener('change', applyFilters);
     
-    document.getElementById('btn-add-post').onclick = () => openModal('modal-post');
+    document.getElementById('btn-add-post').onclick = () => {
+        const context = document.getElementById('btn-add-post').getAttribute('data-context');
+        if (context === 'finance') openModal('modal-finance');
+        else openModal('modal-post');
+    };
+    document.getElementById('finance-form').addEventListener('submit', handleFinancePost);
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
 }

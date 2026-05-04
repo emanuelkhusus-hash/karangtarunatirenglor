@@ -120,11 +120,40 @@
                         <span id="announcement-count">0 Pesan</span>
                     </div>
                     <div id="announcement-list" class="list-wrapper">
-                        <!-- Loading State -->
-                        <div class="loading-state">
-                            <div class="spinner"></div>
-                            <p>Mengambil data...</p>
+                        <!-- Content will be injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Finance Section -->
+                <div id="finance-section" class="hidden">
+                    <div class="finance-summary">
+                        <div class="balance-card">
+                            <label>Saldo Kas Saat Ini</label>
+                            <h2 id="total-balance">Rp 0</h2>
                         </div>
+                        <div class="summary-grid">
+                            <div class="summary-item income">
+                                <i class="fas fa-arrow-down"></i>
+                                <div>
+                                    <label>Pemasukan</label>
+                                    <span id="total-income">Rp 0</span>
+                                </div>
+                            </div>
+                            <div class="summary-item expense">
+                                <i class="fas fa-arrow-up"></i>
+                                <div>
+                                    <label>Pengeluaran</label>
+                                    <span id="total-expense">Rp 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section-header">
+                        <h3>Riwayat Transaksi</h3>
+                    </div>
+                    <div id="finance-list" class="list-wrapper">
+                        <!-- Finance items injected here -->
                     </div>
                 </div>
             </main>
@@ -141,6 +170,10 @@
                 <button class="nav-item active" data-target="home">
                     <i class="fas fa-home"></i>
                     <span>Beranda</span>
+                </button>
+                <button class="nav-item" data-target="finance">
+                    <i class="fas fa-wallet"></i>
+                    <span>Kas</span>
                 </button>
                 <button class="nav-item" id="nav-members" data-target="members">
                     <i class="fas fa-address-book"></i>
@@ -194,6 +227,32 @@
                         <!-- Message content -->
                     </div>
                 </div>
+            </div>
+
+            <!-- Modal Finance -->
+            <div id="modal-finance" class="modal-content">
+                <div class="modal-header">
+                    <h3>Input Kas Baru</h3>
+                    <button class="btn-close">&times;</button>
+                </div>
+                <form id="finance-form">
+                    <div class="input-group">
+                        <label>Jenis Transaksi</label>
+                        <select id="finance-type" class="full-width-select" required>
+                            <option value="income">Pemasukan (Uang Masuk)</option>
+                            <option value="expense">Pengeluaran (Uang Keluar)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Jumlah (Rp)</label>
+                        <input type="number" id="finance-amount" placeholder="Contoh: 50000" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Keterangan / Keperluan</label>
+                        <input type="text" id="finance-note" placeholder="Contoh: Iuran Bulanan atau Beli Konsumsi" required>
+                    </div>
+                    <button type="submit" class="btn-primary full-width">Simpan Transaksi</button>
+                </form>
             </div>
             </section>
         </div>
