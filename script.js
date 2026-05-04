@@ -332,11 +332,17 @@ async function fetchMembers() {
 }
 
 function renderMembers(data) {
-    document.getElementById('announcement-count').textContent = `${data.length} Anggota`;
+    const searchTerm = document.getElementById('search-member-input')?.value.toLowerCase().trim() || "";
+    const filteredData = data.filter(member => 
+        member.nama.toLowerCase().includes(searchTerm) || 
+        member.jabatan.toLowerCase().includes(searchTerm)
+    );
+
+    document.getElementById('announcement-count').textContent = `${filteredData.length} Anggota`;
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
-    announcementList.innerHTML = data.map(member => `
+    announcementList.innerHTML = filteredData.map(member => `
         <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}">
             <div class="item-header">
                 <span class="author">${member.jabatan}</span>
@@ -360,7 +366,7 @@ function renderMembers(data) {
                                 <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
                                 <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
                             </select>
-                            <button onclick="deleteMember('${member.id}', '${member.nama}')" class="btn-reject" style="background: #fee2e2; color: #ef4444; font-size: 0.75rem; padding: 6px; border: 1px solid #fecaca; border-radius: 8px;">
+                            <button onclick="deleteMember('${member.id}', '${member.nama}')" class="btn-reject" style="background: #fee2e2; color: #ef4444; font-size: 0.75rem; padding: 8px; border: 1px solid #fecaca; border-radius: 8px; margin-top: 5px;">
                                 <i class="fas fa-trash-alt"></i> Hapus Anggota
                             </button>
                         </div>
@@ -376,7 +382,7 @@ async function deleteMember(userId, userName) {
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            body: JSON.stringify({ action: 'deleteMember', targetUserId: userId })
+            body: JSON.stringify({ action: 'rejectUser', targetUserId: userId }) // Menggunakan action rejectUser agar langsung work tanpa ubah Apps Script
         });
         const result = await response.json();
         if (result.status === 'success') {
@@ -452,17 +458,20 @@ function setupEventListeners() {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.remove('hidden');
+                document.getElementById('member-search-container').classList.add('hidden');
                 document.querySelector('.section-header h3').textContent = 'Pengumuman Terbaru';
                 fetchAnnouncements();
             } else if (target === 'members') {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
+                document.getElementById('member-search-container').classList.remove('hidden');
                 fetchMembers();
             } else if (target === 'profile') {
                 document.getElementById('announcement-container').classList.add('hidden');
                 document.getElementById('profile-section').classList.remove('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
+                document.getElementById('member-search-container').classList.add('hidden');
                 renderProfile();
             }
         });
