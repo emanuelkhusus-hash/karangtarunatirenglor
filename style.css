@@ -1113,3 +1113,24 @@ body {
 .full-width-select:focus {
     border-color: var(--primary);
 }
+
+.btn-export {
+    background: #f1f5f9;
+    color: var(--primary);
+    border: 1px solid #e2e8f0;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-export:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}

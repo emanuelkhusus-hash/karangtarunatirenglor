@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
 });
 
-
 function updateSystemYear() {
     const year = new Date().getFullYear();
     const yearElements = ['current-year', 'footer-year'];
@@ -38,19 +37,15 @@ function updateSystemYear() {
     });
 }
 
-
 // --- Authentication Functions ---
 
 async function checkSession() {
     const savedUser = localStorage.getItem('kt_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        
-        // If status is still pending, try to refresh from server
         if (currentUser.status === 'pending') {
             await refreshUserStatus();
         }
-        
         showMainScreen();
     } else {
         showAuthScreen();
@@ -59,9 +54,7 @@ async function checkSession() {
 
 async function refreshUserStatus() {
     if (!currentUser) return null;
-    
     let payload = { action: 'checkStatusOnly', id: currentUser.id };
-    
     if (currentUser.password) {
         payload = {
             action: 'login',
@@ -69,14 +62,12 @@ async function refreshUserStatus() {
             password: currentUser.password
         };
     }
-
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
         const result = await response.json();
-        
         if (result.status === 'success') {
             if (payload.action === 'login') {
                 currentUser = { ...result.data, password: currentUser.password };
@@ -88,7 +79,6 @@ async function refreshUserStatus() {
         }
         return result;
     } catch (e) { 
-        console.error("Auto refresh failed", e); 
         return { status: 'error', message: 'Koneksi gagal' };
     }
 }
@@ -97,9 +87,7 @@ async function checkStatusManual(btn) {
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengecek...';
-    
     const result = await refreshUserStatus();
-    
     if (result && result.status === 'error') {
         alert("Gagal mengecek: " + (result.message || "Kesalahan server"));
     } else {
@@ -109,38 +97,27 @@ async function checkStatusManual(btn) {
             location.reload();
             return;
         } else {
-            alert("Status saat ini di server: '" + currentStatus + "'. Mohon tunggu persetujuan admin.");
+            alert("Status saat ini: '" + currentStatus + "'. Mohon tunggu persetujuan admin.");
         }
     }
-    
     btn.disabled = false;
     btn.innerHTML = originalText;
 }
-
-
-
 
 async function handleAuth(e) {
     e.preventDefault();
     const name = document.getElementById('reg-name').value;
     const password = document.getElementById('login-id').value;
-
     const btn = document.getElementById('btn-login');
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner small"></div>';
-
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'login',
-                nama: name,
-                password: password
-            })
+            body: JSON.stringify({ action: 'login', nama: name, password: password })
         });
         const result = await response.json();
-
         if (result.status === 'success') {
             currentUser = { ...result.data, password: password };
             localStorage.setItem('kt_user', JSON.stringify(currentUser));
@@ -148,7 +125,6 @@ async function handleAuth(e) {
         } else {
             alert('Gagal login: ' + result.message);
         }
-
     } catch (error) {
         alert('Terjadi kesalahan koneksi ke server.');
     } finally {
@@ -164,16 +140,12 @@ function showAuthScreen() {
 
 function showMainScreen() {
     if (!currentUser) return showAuthScreen();
-    
     authSection.classList.remove('active');
     mainSection.classList.add('active');
-    
-    // Update Profile UI
     document.getElementById('display-name').textContent = currentUser.nama;
     document.getElementById('display-role').textContent = currentUser.jabatan;
     document.getElementById('user-avatar').textContent = currentUser.nama.charAt(0).toUpperCase();
 
-    // Check Status Pending
     if (currentUser.status === 'pending') {
         announcementList.innerHTML = `
             <div class="pending-screen">
@@ -188,18 +160,9 @@ function showMainScreen() {
         return;
     }
 
-
-    // Role Check (Case Insensitive)
     const role = currentUser.jabatan.toLowerCase().trim();
-    const isPowerUser = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
-
-    if (isPowerUser) {
-        adminActions.classList.remove('hidden');
-        if (role === 'admin') checkNotifications();
-    } else {
-        adminActions.classList.add('hidden');
-    }
-
+    if (role === 'admin') checkNotifications();
+    
     updateFabContext('announcement');
     fetchAnnouncements();
 }
@@ -214,9 +177,7 @@ async function checkNotifications() {
             if (pendingCount > 0) {
                 badge.textContent = pendingCount;
                 badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
+            } else { badge.classList.add('hidden'); }
         }
     } catch (e) { console.error(e); }
 }
@@ -231,7 +192,7 @@ function logout() {
 // --- Announcement Functions ---
 
 async function fetchAnnouncements() {
-    announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Mengambil data...</p></div>';
+    announcementList.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat data...</p></div>';
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getAnnouncements`);
         const result = await response.json();
@@ -250,9 +211,7 @@ function renderAnnouncements(data) {
         announcementList.innerHTML = '<div class="empty-state"><p>Belum ada pengumuman.</p></div>';
         return;
     }
-
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
-
     announcementList.innerHTML = data.map((item, index) => {
         const dateDisplay = isNaN(item.hari) ? `${item.bulan} ${item.hari}` : `${item.hari} ${item.bulan}`;
         return `
@@ -291,7 +250,6 @@ async function handlePost(e) {
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true;
     btn.textContent = 'Mengirim...';
-
     const payload = {
         action: 'postAnnouncement',
         nama: currentUser.nama,
@@ -299,24 +257,16 @@ async function handlePost(e) {
         judul: document.getElementById('post-title').value,
         isi: document.getElementById('post-content').value
     };
-
     try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
         if (result.status === 'success') {
             closeModal();
             fetchAnnouncements();
             e.target.reset();
         }
-    } catch (error) {
-        alert('Gagal mengirim.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Kirim Pengumuman';
-    }
+    } catch (error) { alert('Gagal mengirim.'); }
+    finally { btn.disabled = false; btn.textContent = 'Kirim Pengumuman'; }
 }
 
 // --- Member Management ---
@@ -339,11 +289,8 @@ function renderMembers(data) {
         member.nama.toLowerCase().includes(searchTerm) || 
         member.jabatan.toLowerCase().includes(searchTerm)
     );
-
     document.getElementById('announcement-count').textContent = `${filteredData.length} Anggota`;
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
-    
-    // Hanya user dengan jabatan "Admin" yang bisa mengelola anggota
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
     announcementList.innerHTML = filteredData.map(member => `
@@ -382,66 +329,41 @@ function renderMembers(data) {
 }
 
 async function deleteMember(userId, userName) {
-    if (!confirm(`Hapus anggota "${userName}"? Data ini tidak bisa dikembalikan.`)) return;
-    try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'rejectUser', targetUserId: userId }) // Menggunakan action rejectUser agar langsung work tanpa ubah Apps Script
-        });
-        const result = await response.json();
-        if (result.status === 'success') {
-            alert('Anggota berhasil dihapus.');
-            fetchMembers();
-        } else {
-            alert('Gagal menghapus: ' + result.message);
-        }
-    } catch (e) { 
-        alert('Gagal menghubungi server.'); 
-    }
-}
-
-async function approveUser(userId) {
-    if (!confirm('Setujui anggota ini?')) return;
-    try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'approveUser', targetUserId: userId })
-        });
-        const result = await response.json();
-        if (result.status === 'success') {
-            alert('Berhasil disetujui!');
-            fetchMembers();
-        }
-    } catch (e) { alert('Gagal.'); }
-}
-
-async function rejectUser(userId) {
-    if (!confirm('Tolak pendaftaran ini? Data pengguna akan dihapus.')) return;
+    if (!confirm(`Hapus anggota "${userName}"?`)) return;
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'rejectUser', targetUserId: userId })
         });
         const result = await response.json();
-        if (result.status === 'success') {
-            alert('Pendaftaran ditolak.');
-            fetchMembers();
-        }
-    } catch (e) { alert('Gagal menolak.'); }
+        if (result.status === 'success') { alert('Anggota berhasil dihapus.'); fetchMembers(); }
+    } catch (e) { alert('Gagal.'); }
+}
+
+async function approveUser(userId) {
+    if (!confirm('Setujui anggota ini?')) return;
+    try {
+        const response = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'approveUser', targetUserId: userId }) });
+        const result = await response.json();
+        if (result.status === 'success') { alert('Berhasil disetujui!'); fetchMembers(); }
+    } catch (e) { alert('Gagal.'); }
+}
+
+async function rejectUser(userId) {
+    if (!confirm('Tolak pendaftaran ini?')) return;
+    try {
+        const response = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'rejectUser', targetUserId: userId }) });
+        const result = await response.json();
+        if (result.status === 'success') { alert('Pendaftaran ditolak.'); fetchMembers(); }
+    } catch (e) { alert('Gagal.'); }
 }
 
 async function changeRole(userId, newRole) {
     if (!confirm(`Ubah jabatan ke ${newRole}?`)) return;
     try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updateRole', targetUserId: userId, newRole: newRole })
-        });
+        const response = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateRole', targetUserId: userId, newRole: newRole }) });
         const result = await response.json();
-        if (result.status === 'success') {
-            alert('Jabatan diperbarui!');
-            fetchMembers();
-        }
+        if (result.status === 'success') { alert('Jabatan diperbarui!'); fetchMembers(); }
     } catch (e) { alert('Gagal.'); }
 }
 
@@ -450,24 +372,19 @@ async function changeRole(userId, newRole) {
 function updateFabContext(context) {
     const fab = document.getElementById('btn-add-post');
     const role = currentUser.jabatan.toLowerCase().trim();
-    
     fab.setAttribute('data-context', context);
-    
     if (context === 'announcement') {
         const canPost = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
         fab.classList.toggle('hidden', !canPost);
     } else if (context === 'finance') {
         const canPostFinance = ['admin', 'bendahara'].includes(role);
         fab.classList.toggle('hidden', !canPostFinance);
-    } else {
-        fab.classList.add('hidden');
-    }
+    } else { fab.classList.add('hidden'); }
 }
 
 async function fetchFinance() {
     const list = document.getElementById('finance-list');
     list.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat data keuangan...</p></div>';
-    
     try {
         const response = await fetch(`${CONFIG.API_URL}?action=getFinance`);
         const result = await response.json();
@@ -475,26 +392,16 @@ async function fetchFinance() {
             allFinance = result.data;
             renderFinance(allFinance);
         }
-    } catch (error) {
-        list.innerHTML = '<p class="error-msg">Gagal memuat data keuangan.</p>';
-    }
+    } catch (error) { list.innerHTML = '<p class="error-msg">Gagal memuat data keuangan.</p>'; }
 }
 
 function renderFinance(data) {
     const list = document.getElementById('finance-list');
-    let totalIncome = 0;
-    let totalExpense = 0;
-
-    if (data.length === 0) {
-        list.innerHTML = '<div class="empty-state"><p>Belum ada transaksi.</p></div>';
-        return;
-    }
-
+    let totalIncome = 0; let totalExpense = 0;
+    if (data.length === 0) { list.innerHTML = '<div class="empty-state"><p>Belum ada transaksi.</p></div>'; return; }
     list.innerHTML = data.map(item => {
         const amount = parseInt(item.jumlah);
-        if (item.jenis === 'income') totalIncome += amount;
-        else totalExpense += amount;
-
+        if (item.jenis === 'income') totalIncome += amount; else totalExpense += amount;
         return `
             <div class="finance-item ${item.jenis}">
                 <div class="finance-info">
@@ -508,7 +415,6 @@ function renderFinance(data) {
             </div>
         `;
     }).reverse().join('');
-
     document.getElementById('total-income').textContent = formatRupiah(totalIncome);
     document.getElementById('total-expense').textContent = formatRupiah(totalExpense);
     document.getElementById('total-balance').textContent = formatRupiah(totalIncome - totalExpense);
@@ -517,9 +423,7 @@ function renderFinance(data) {
 async function handleFinancePost(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Menyimpan...';
-
+    btn.disabled = true; btn.textContent = 'Menyimpan...';
     const payload = {
         action: 'postFinance',
         nama: currentUser.nama,
@@ -527,32 +431,49 @@ async function handleFinancePost(e) {
         jumlah: document.getElementById('finance-amount').value,
         keterangan: document.getElementById('finance-note').value
     };
-
     try {
-        const response = await fetch(CONFIG.API_URL, {
-            method: 'POST',
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await response.json();
-        if (result.status === 'success') {
-            closeModal();
-            fetchFinance();
-            e.target.reset();
-        }
-    } catch (error) {
-        alert('Gagal menyimpan transaksi.');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Simpan Transaksi';
-    }
+        if (result.status === 'success') { closeModal(); fetchFinance(); e.target.reset(); }
+    } catch (error) { alert('Gagal menyimpan.'); }
+    finally { btn.disabled = false; btn.textContent = 'Simpan Transaksi'; }
 }
 
 function formatRupiah(number) {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(number);
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+}
+
+function exportFinance() {
+    if (allFinance.length === 0) {
+        alert('Tidak ada data untuk di-export.');
+        return;
+    }
+
+    // Header CSV
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Tanggal,Nama Penginput,Jenis,Jumlah,Keterangan\r\n";
+
+    // Isi Data
+    allFinance.forEach(item => {
+        const row = [
+            item.tanggal,
+            item.nama,
+            item.jenis === 'income' ? 'Pemasukan' : 'Pengeluaran',
+            item.jumlah,
+            item.keterangan.replace(/,/g, " ") // Hindari koma dalam teks agar CSV tidak pecah
+        ].join(",");
+        csvContent += row + "\r\n";
+    });
+
+    // Proses Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const fileName = `Laporan_Kas_Karang_Taruna_${new Date().toLocaleDateString('id-ID')}.csv`;
+    link.setAttribute("download", fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // --- UI Helpers ---
@@ -561,6 +482,7 @@ function setupEventListeners() {
     authForm.addEventListener('submit', handleAuth);
     btnLogout.addEventListener('click', logout);
     document.getElementById('post-form').addEventListener('submit', handlePost);
+    document.getElementById('finance-form').addEventListener('submit', handleFinancePost);
     
     bottomNavItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -608,13 +530,11 @@ function setupEventListeners() {
     document.getElementById('search-announcement').addEventListener('input', applyFilters);
     document.getElementById('filter-sender').addEventListener('change', applyFilters);
     document.getElementById('filter-month').addEventListener('change', applyFilters);
-    
     document.getElementById('btn-add-post').onclick = () => {
         const context = document.getElementById('btn-add-post').getAttribute('data-context');
         if (context === 'finance') openModal('modal-finance');
         else openModal('modal-post');
     };
-    document.getElementById('finance-form').addEventListener('submit', handleFinancePost);
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);
     modalOverlay.onclick = (e) => { if (e.target === modalOverlay) closeModal(); };
 }
@@ -623,33 +543,14 @@ function renderProfile() {
     const profileSection = document.getElementById('profile-section');
     profileSection.innerHTML = `
         <div class="profile-card">
-            <div class="profile-avatar-large">
-                ${currentUser.nama.charAt(0).toUpperCase()}
-            </div>
+            <div class="profile-avatar-large">${currentUser.nama.charAt(0).toUpperCase()}</div>
             <h3>${currentUser.nama}</h3>
             <p style="color: var(--text-muted); font-size: 0.9rem;">${currentUser.jabatan}</p>
-            
             <div class="profile-info-list">
-                <div class="info-item">
-                    <i class="fas fa-id-badge"></i>
-                    <div class="info-content">
-                        <label>ID Anggota</label>
-                        <span>${currentUser.id}</span>
-                    </div>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-shield-alt"></i>
-                    <div class="info-content">
-                        <label>Status Akun</label>
-                        <span style="color: #16a34a;">${currentUser.status.toUpperCase()}</span>
-                    </div>
-                </div>
+                <div class="info-item"><i class="fas fa-id-badge"></i><div class="info-content"><label>ID Anggota</label><span>${currentUser.id}</span></div></div>
+                <div class="info-item"><i class="fas fa-shield-alt"></i><div class="info-content"><label>Status Akun</label><span style="color: #16a34a;">${currentUser.status.toUpperCase()}</span></div></div>
             </div>
-            
-            <button onclick="logout()" class="btn-logout-alt">
-                <i class="fas fa-sign-out-alt"></i>
-                Keluar Aplikasi
-            </button>
+            <button onclick="logout()" class="btn-logout-alt"><i class="fas fa-sign-out-alt"></i> Keluar Aplikasi</button>
         </div>
     `;
 }
@@ -658,44 +559,25 @@ function applyFilters() {
     const searchTerm = document.getElementById('search-announcement').value.toLowerCase().trim();
     const filterSender = document.getElementById('filter-sender').value;
     const filterMonth = document.getElementById('filter-month').value.toLowerCase().trim();
-
     const filtered = allAnnouncements.filter(item => {
-        // 1. Filter Kata Kunci
-        const matchesSearch = searchTerm === "" || 
-                              item.judul.toLowerCase().includes(searchTerm) || 
-                              item.isi.toLowerCase().includes(searchTerm);
-        
-        // 2. Filter Pengirim
+        const matchesSearch = searchTerm === "" || item.judul.toLowerCase().includes(searchTerm) || item.isi.toLowerCase().includes(searchTerm);
         const senderJabatan = (item.pengirim_jabatan || item.jabatan || "").toLowerCase().trim();
         const matchesSender = filterSender === 'all' || senderJabatan === filterSender.toLowerCase().trim();
-        
-        // 3. Filter Bulan (Case Insensitive & Trim)
         const valHari = String(item.hari || "").toLowerCase().trim();
         const valBulan = String(item.bulan || "").toLowerCase().trim();
-        
-        const matchesMonth = filterMonth === 'all' || 
-                             valBulan === filterMonth || 
-                             valHari === filterMonth;
-
+        const matchesMonth = filterMonth === 'all' || valBulan === filterMonth || valHari === filterMonth;
         return matchesSearch && matchesSender && matchesMonth;
     });
-    
     renderAnnouncements(filtered);
 }
 
-
 function resetFilters(hardReload = false) {
-    if (hardReload) {
-        // Membersihkan cache aplikasi dan reload
-        location.reload();
-        return;
-    }
+    if (hardReload) { location.reload(); return; }
     document.getElementById('search-announcement').value = '';
     document.getElementById('filter-sender').value = 'all';
     document.getElementById('filter-month').value = 'all';
     fetchAnnouncements();
 }
-
 
 function populateMonthFilter() {
     const select = document.getElementById('filter-month');
@@ -713,15 +595,12 @@ function openModal(id) {
     document.getElementById(id).classList.remove('hidden');
 }
 
-function closeModal() {
-    modalOverlay.style.display = 'none';
-}
+function closeModal() { modalOverlay.style.display = 'none'; }
 
 function showDetail(index) {
     const item = allAnnouncements[index];
     const pengirimNama = item.pengirim_nama || item.nama || 'Anonim';
     const pengirimJabatan = item.pengirim_jabatan || item.jabatan || 'Anggota';
-    
     document.getElementById('detail-avatar').textContent = pengirimNama.charAt(0).toUpperCase();
     document.getElementById('detail-sender').textContent = `${pengirimNama} (${pengirimJabatan})`;
     document.getElementById('detail-date').textContent = `${item.hari} ${item.bulan}`;
