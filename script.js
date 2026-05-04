@@ -444,77 +444,85 @@ function formatRupiah(number) {
 }
 
 function exportFinance() {
-    if (allFinance.length === 0) {
-        alert('Tidak ada data untuk di-export.');
+    // 1. Cek apakah ada data
+    if (!allFinance || allFinance.length === 0) {
+        alert('Tidak ada data transaksi untuk di-export. Pastikan menu Kas sudah memuat data.');
         return;
     }
 
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    // 2. Cek apakah library jsPDF sudah ter-load
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('Library PDF sedang dimuat atau gagal dimuat. Silakan refresh halaman dan tunggu sebentar.');
+        console.error('jsPDF not found in window object');
+        return;
+    }
 
-    // Header Laporan
-    doc.setFontSize(18);
-    doc.setTextColor(79, 70, 229); // Primary Color
-    doc.text("LAPORAN KAS KARANG TARUNA", 105, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 116, 139); // Muted Color
-    doc.text("Watuireng Lor, Desa Platarejo", 105, 27, { align: 'center' });
-    doc.text(`Dicetak pada: ${dateStr}`, 105, 32, { align: 'center' });
-    
-    doc.setLineWidth(0.5);
-    doc.line(20, 38, 190, 38);
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Hitung Ringkasan
-    let totalIn = 0; let totalOut = 0;
-    const tableData = allFinance.map((item, index) => {
-        const amt = parseInt(item.jumlah);
-        if (item.jenis === 'income') totalIn += amt; else totalOut += amt;
-        return [
-            index + 1,
-            item.tanggal,
-            item.keterangan,
-            item.nama,
-            item.jenis === 'income' ? formatRupiah(amt) : '-',
-            item.jenis === 'expense' ? formatRupiah(amt) : '-'
-        ];
-    });
+        // Header Laporan
+        doc.setFontSize(18);
+        doc.setTextColor(79, 70, 229);
+        doc.text("LAPORAN KAS KARANG TARUNA", 105, 20, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Watuireng Lor, Desa Platarejo", 105, 27, { align: 'center' });
+        doc.text(`Dicetak pada: ${dateStr}`, 105, 32, { align: 'center' });
+        
+        doc.setLineWidth(0.5);
+        doc.line(20, 38, 190, 38);
 
-    // Tabel Transaksi
-    doc.autoTable({
-        startY: 45,
-        head: [['No', 'Tanggal', 'Keterangan', 'Oleh', 'Masuk', 'Keluar']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [79, 70, 229] },
-        styles: { fontSize: 8 },
-        columnStyles: {
-            4: { halign: 'right' },
-            5: { halign: 'right' }
-        }
-    });
+        // Hitung Ringkasan
+        let totalIn = 0; let totalOut = 0;
+        const tableData = allFinance.map((item, index) => {
+            const amt = parseInt(item.jumlah) || 0;
+            if (item.jenis === 'income') totalIn += amt; else totalOut += amt;
+            return [
+                index + 1,
+                item.tanggal,
+                item.keterangan,
+                item.nama,
+                item.jenis === 'income' ? formatRupiah(amt) : '-',
+                item.jenis === 'expense' ? formatRupiah(amt) : '-'
+            ];
+        });
 
-    // Ringkasan Akhir
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Total Pemasukan: ${formatRupiah(totalIn)}`, 140, finalY);
-    doc.text(`Total Pengeluaran: ${formatRupiah(totalOut)}`, 140, finalY + 7);
-    
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.text(`SALDO AKHIR: ${formatRupiah(totalIn - totalOut)}`, 140, finalY + 15);
+        // Tabel Transaksi
+        doc.autoTable({
+            startY: 45,
+            head: [['No', 'Tanggal', 'Keterangan', 'Oleh', 'Masuk', 'Keluar']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { fillColor: [79, 70, 229] },
+            styles: { fontSize: 8 },
+            columnStyles: {
+                4: { halign: 'right' },
+                5: { halign: 'right' }
+            }
+        });
 
-    // Footer
-    doc.setFont(undefined, 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("Aplikasi Karang Taruna Digital System", 105, 285, { align: 'center' });
+        // Ringkasan Akhir
+        const finalY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 45) + 15;
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Total Pemasukan: ${formatRupiah(totalIn)}`, 130, finalY);
+        doc.text(`Total Pengeluaran: ${formatRupiah(totalOut)}`, 130, finalY + 7);
+        
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`SALDO AKHIR: ${formatRupiah(totalIn - totalOut)}`, 130, finalY + 15);
 
-    // Download PDF
-    doc.save(`Laporan_Kas_Karang_Taruna_${now.getTime()}.pdf`);
+        // Download PDF
+        doc.save(`Laporan_Kas_KT_${now.getTime()}.pdf`);
+
+    } catch (err) {
+        console.error('PDF Generation Error:', err);
+        alert('Terjadi kesalahan saat membuat PDF: ' + err.message);
+    }
 }
 
 // --- UI Helpers ---
