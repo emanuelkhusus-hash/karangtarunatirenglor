@@ -340,6 +340,8 @@ function renderMembers(data) {
 
     document.getElementById('announcement-count').textContent = `${filteredData.length} Anggota`;
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
+    
+    // Hanya user dengan jabatan "Admin" yang bisa mengelola anggota
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
     announcementList.innerHTML = filteredData.map(member => `
