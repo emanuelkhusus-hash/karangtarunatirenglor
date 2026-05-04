@@ -440,7 +440,8 @@ async function handleFinancePost(e) {
 }
 
 function formatRupiah(number) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+    return formatted.replace(/\u00A0/g, ' '); // Ganti non-breaking space agar support di jsPDF
 }
 
 function exportFinance() {
