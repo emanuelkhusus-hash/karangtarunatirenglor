@@ -553,7 +553,12 @@ function applyFilters() {
 }
 
 
-function resetFilters() {
+function resetFilters(hardReload = false) {
+    if (hardReload) {
+        // Membersihkan cache aplikasi dan reload
+        location.reload();
+        return;
+    }
     document.getElementById('search-announcement').value = '';
     document.getElementById('filter-sender').value = 'all';
     document.getElementById('filter-month').value = 'all';
