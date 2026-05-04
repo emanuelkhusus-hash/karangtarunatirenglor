@@ -449,31 +449,72 @@ function exportFinance() {
         return;
     }
 
-    // Header CSV
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Tanggal,Nama Penginput,Jenis,Jumlah,Keterangan\r\n";
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-    // Isi Data
-    allFinance.forEach(item => {
-        const row = [
+    // Header Laporan
+    doc.setFontSize(18);
+    doc.setTextColor(79, 70, 229); // Primary Color
+    doc.text("LAPORAN KAS KARANG TARUNA", 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139); // Muted Color
+    doc.text("Watuireng Lor, Desa Platarejo", 105, 27, { align: 'center' });
+    doc.text(`Dicetak pada: ${dateStr}`, 105, 32, { align: 'center' });
+    
+    doc.setLineWidth(0.5);
+    doc.line(20, 38, 190, 38);
+
+    // Hitung Ringkasan
+    let totalIn = 0; let totalOut = 0;
+    const tableData = allFinance.map((item, index) => {
+        const amt = parseInt(item.jumlah);
+        if (item.jenis === 'income') totalIn += amt; else totalOut += amt;
+        return [
+            index + 1,
             item.tanggal,
+            item.keterangan,
             item.nama,
-            item.jenis === 'income' ? 'Pemasukan' : 'Pengeluaran',
-            item.jumlah,
-            item.keterangan.replace(/,/g, " ") // Hindari koma dalam teks agar CSV tidak pecah
-        ].join(",");
-        csvContent += row + "\r\n";
+            item.jenis === 'income' ? formatRupiah(amt) : '-',
+            item.jenis === 'expense' ? formatRupiah(amt) : '-'
+        ];
     });
 
-    // Proses Download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    const fileName = `Laporan_Kas_Karang_Taruna_${new Date().toLocaleDateString('id-ID')}.csv`;
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Tabel Transaksi
+    doc.autoTable({
+        startY: 45,
+        head: [['No', 'Tanggal', 'Keterangan', 'Oleh', 'Masuk', 'Keluar']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [79, 70, 229] },
+        styles: { fontSize: 8 },
+        columnStyles: {
+            4: { halign: 'right' },
+            5: { halign: 'right' }
+        }
+    });
+
+    // Ringkasan Akhir
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Total Pemasukan: ${formatRupiah(totalIn)}`, 140, finalY);
+    doc.text(`Total Pengeluaran: ${formatRupiah(totalOut)}`, 140, finalY + 7);
+    
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`SALDO AKHIR: ${formatRupiah(totalIn - totalOut)}`, 140, finalY + 15);
+
+    // Footer
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text("Aplikasi Karang Taruna Digital System", 105, 285, { align: 'center' });
+
+    // Download PDF
+    doc.save(`Laporan_Kas_Karang_Taruna_${now.getTime()}.pdf`);
 }
 
 // --- UI Helpers ---
