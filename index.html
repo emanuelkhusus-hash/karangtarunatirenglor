@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karang Taruna Hub - Aplikasi Pengumuman</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=6">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -77,29 +77,33 @@
             <main class="content">
                 <!-- Filters -->
                 <div class="filter-bar">
+                    <div class="filter-header">
+                        <h4>Pencarian & Filter</h4>
+                        <button onclick="resetFilters(true)" class="btn-icon-reset" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="search-announcement" placeholder="Cari pengumuman...">
+                        <input type="text" id="search-announcement" placeholder="Cari judul atau isi pengumuman...">
                     </div>
                     <div class="filter-actions">
-                        <select id="filter-sender">
-                            <option value="all">Semua Pengirim</option>
-                            <option value="Ketua">Ketua</option>
-                            <option value="Sekretaris">Sekretaris</option>
-                            <option value="Bendahara">Bendahara</option>
-                        </select>
-                        <select id="filter-month">
-                            <option value="all">Semua Bulan</option>
-                            <!-- Months will be populated by JS -->
-                        </select>
-                    </div>
-                    <div class="filter-buttons">
-                        <button onclick="applyFilters()" class="btn-apply">
-                            <i class="fas fa-check-circle"></i> Terapkan
-                        </button>
-                        <button onclick="resetFilters(true)" class="btn-reset">
-                            <i class="fas fa-sync"></i> Reset & Update
-                        </button>
+                        <div class="select-wrapper">
+                            <i class="fas fa-user-tag"></i>
+                            <select id="filter-sender">
+                                <option value="all">Semua Pengirim</option>
+                                <option value="Ketua">Ketua</option>
+                                <option value="Sekretaris">Sekretaris</option>
+                                <option value="Bendahara">Bendahara</option>
+                            </select>
+                        </div>
+                        <div class="select-wrapper">
+                            <i class="fas fa-calendar-alt"></i>
+                            <select id="filter-month">
+                                <option value="all">Semua Bulan</option>
+                                <!-- Months will be populated by JS -->
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -263,7 +267,7 @@
         </div> <!-- End of modal-overlay -->
     </div> <!-- End of app -->
 
-        <script src="script.js?v=3"></script>
+        <script src="script.js?v=6"></script>
 </body>
 
 </html>

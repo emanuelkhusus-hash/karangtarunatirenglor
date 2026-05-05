@@ -215,7 +215,7 @@ function renderAnnouncements(data) {
     announcementList.innerHTML = data.map((item, index) => {
         const dateDisplay = isNaN(item.hari) ? `${item.bulan} ${item.hari}` : `${item.hari} ${item.bulan}`;
         return `
-        <div class="announcement-item" onclick="showDetail(${index})">
+        <div class="announcement-item" style="animation-delay: ${index * 0.05}s" onclick="showDetail(${index})">
             <div class="item-header">
                 <span class="author">${item.pengirim_nama || item.nama || 'Anonim'} (${item.pengirim_jabatan || item.jabatan || 'Anggota'})</span>
                 <div class="header-right">
@@ -293,23 +293,22 @@ function renderMembers(data) {
     document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
-    announcementList.innerHTML = filteredData.map(member => `
-        <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}">
+    const itemsHtml = filteredData.map((member, index) => `
+        <div class="announcement-item member-item ${member.status === 'pending' ? 'is-pending' : ''}" style="animation-delay: ${index * 0.05}s">
             <div class="item-header">
                 <span class="author">${member.jabatan}</span>
-                <span class="status-tag ${member.status}">${member.status === 'pending' ? 'Menunggu' : 'Aktif'}</span>
+                <span class="status-tag ${member.status}">${member.status === 'pending' ? 'Wait' : 'Aktif'}</span>
             </div>
             <h4>${member.nama}</h4>
-            <p>Password: ${member.password}</p>
             ${isAdmin ? `
                 <div class="admin-tools">
                     ${member.status === 'pending' ? `
-                        <div style="display: flex; gap: 10px;">
-                            <button onclick="approveUser('${member.id}')" class="btn-approve" style="flex: 1;">Setujui</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="approveUser('${member.id}')" class="btn-approve" style="flex: 1;">OK</button>
                             <button onclick="rejectUser('${member.id}')" class="btn-reject" style="flex: 1;">Tolak</button>
                         </div>
                     ` : `
-                        <div style="display: flex; gap: 10px; flex-direction: column;">
+                        <div style="display: flex; gap: 8px; flex-direction: column;">
                             <select onchange="changeRole('${member.id}', this.value)" class="role-select">
                                 <option value="Anggota" ${member.jabatan === 'Anggota' ? 'selected' : ''}>Anggota</option>
                                 <option value="Ketua" ${member.jabatan === 'Ketua' ? 'selected' : ''}>Ketua</option>
@@ -317,8 +316,8 @@ function renderMembers(data) {
                                 <option value="Bendahara" ${member.jabatan === 'Bendahara' ? 'selected' : ''}>Bendahara</option>
                                 <option value="Admin" ${member.jabatan === 'Admin' ? 'selected' : ''}>Admin</option>
                             </select>
-                            <button onclick="deleteMember('${member.id}', '${member.nama}')" class="btn-reject" style="background: #fee2e2; color: #ef4444; font-size: 0.75rem; padding: 8px; border: 1px solid #fecaca; border-radius: 8px; margin-top: 5px;">
-                                <i class="fas fa-trash-alt"></i> Hapus Anggota
+                            <button onclick="deleteMember('${member.id}', '${member.nama}')" class="btn-reject-outline">
+                                <i class="fas fa-trash-alt"></i> Hapus
                             </button>
                         </div>
                     `}
@@ -326,6 +325,8 @@ function renderMembers(data) {
             ` : ''}
         </div>
     `).join('');
+    
+    announcementList.innerHTML = `<div class="members-grid-container">${itemsHtml}</div>`;
 }
 
 async function deleteMember(userId, userName) {
@@ -399,11 +400,11 @@ function renderFinance(data) {
     const list = document.getElementById('finance-list');
     let totalIncome = 0; let totalExpense = 0;
     if (data.length === 0) { list.innerHTML = '<div class="empty-state"><p>Belum ada transaksi.</p></div>'; return; }
-    list.innerHTML = data.map(item => {
+    list.innerHTML = data.map((item, index) => {
         const amount = parseInt(item.jumlah);
         if (item.jenis === 'income') totalIncome += amount; else totalExpense += amount;
         return `
-            <div class="finance-item ${item.jenis}">
+            <div class="finance-item ${item.jenis}" style="animation-delay: ${index * 0.05}s">
                 <div class="finance-info">
                     <h4>${item.keterangan}</h4>
                     <p>Oleh: ${item.nama}</p>
