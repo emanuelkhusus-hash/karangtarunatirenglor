@@ -477,11 +477,18 @@ async function handleFinancePost(e) {
     e.preventDefault();
     const btn = e.target.querySelector('button[type="submit"]');
     btn.disabled = true; btn.textContent = 'Menyimpan...';
+    // Ambil nilai raw (strip titik ribuan)
+    const rawAmount = document.getElementById('finance-amount').value.replace(/\./g, '').trim();
+    if (!rawAmount || isNaN(parseInt(rawAmount)) || parseInt(rawAmount) <= 0) {
+        alert('Masukkan jumlah yang valid.');
+        btn.disabled = false; btn.textContent = 'Simpan Transaksi';
+        return;
+    }
     const payload = {
         action: 'postFinance',
         nama: currentUser.nama,
         jenis: document.getElementById('finance-type').value,
-        jumlah: document.getElementById('finance-amount').value,
+        jumlah: rawAmount,
         keterangan: document.getElementById('finance-note').value
     };
     try {
@@ -494,7 +501,28 @@ async function handleFinancePost(e) {
 
 function formatRupiah(number) {
     const formatted = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
-    return formatted.replace(/\u00A0/g, ' '); // Ganti non-breaking space agar support di jsPDF
+    return formatted.replace(/\u00A0/g, ' ');
+}
+
+// Format input nominal dengan titik ribuan secara real-time
+function formatAmountInput(input) {
+    // Simpan posisi kursor
+    const cursorPos = input.selectionStart;
+    const prevLen = input.value.length;
+
+    // Ambil hanya angka
+    const raw = input.value.replace(/\D/g, '');
+
+    if (!raw) { input.value = ''; return; }
+
+    // Format dengan titik ribuan (id-ID style pakai titik)
+    const formatted = parseInt(raw, 10).toLocaleString('id-ID');
+    input.value = formatted;
+
+    // Perbaiki posisi kursor agar tidak lompat ke akhir
+    const diff = formatted.length - prevLen;
+    const newPos = Math.max(0, cursorPos + diff);
+    input.setSelectionRange(newPos, newPos);
 }
 
 function exportFinance() {

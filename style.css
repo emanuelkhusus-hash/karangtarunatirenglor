@@ -713,6 +713,42 @@ body {
     border-radius: var(--radius-sm); font-size: 1rem; font-weight: 500; outline: none; transition: 0.3s; color: var(--text-main);
 }
 .full-width-select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1); }
+
+/* Amount Input with Rp prefix */
+.amount-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e1;
+    border-radius: var(--radius-sm);
+    background: #f8fafc;
+    overflow: hidden;
+    transition: 0.3s;
+}
+.amount-input-wrapper:focus-within {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
+}
+.amount-prefix {
+    padding: 14px 12px 14px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: transparent;
+    flex-shrink: 0;
+    user-select: none;
+}
+.amount-input-wrapper input {
+    flex: 1;
+    padding: 14px 16px 14px 4px;
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    outline: none;
+    letter-spacing: 0.02em;
+}
 .btn-export {
     background: white; color: var(--primary); border: 1px solid #cbd5e1; padding: 10px 16px;
     border-radius: 12px; font-size: 0.8rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; 

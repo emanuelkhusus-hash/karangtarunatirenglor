@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karang Taruna Hub - Aplikasi Pengumuman</title>
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -302,7 +302,15 @@
                     </div>
                     <div class="input-group">
                         <label>Jumlah (Rp)</label>
-                        <input type="number" id="finance-amount" placeholder="Contoh: 50000" required>
+                        <div class="amount-input-wrapper">
+                            <span class="amount-prefix">Rp</span>
+                            <input type="text" id="finance-amount"
+                                inputmode="numeric"
+                                placeholder="0"
+                                oninput="formatAmountInput(this)"
+                                autocomplete="off"
+                                required>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>Keterangan / Keperluan</label>
@@ -314,7 +322,7 @@
         </div> <!-- End of modal-overlay -->
     </div> <!-- End of app -->
 
-        <script src="script.js?v=12"></script>
+        <script src="script.js?v=13"></script>
 </body>
 
 </html>
