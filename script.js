@@ -570,12 +570,31 @@ function exportFinance() {
         doc.setFont(undefined, 'bold');
         doc.text(`SALDO AKHIR: ${formatRupiah(totalIn - totalOut)}`, 130, finalY + 15);
 
-        // Download PDF
-        doc.save(`Laporan_Kas_KT_${now.getTime()}.pdf`);
+        // Simpan PDF (kompatibel Browser & Android WebView)
+        savePdfDocument(doc, `Laporan_Kas_KT_${now.getTime()}.pdf`);
 
     } catch (err) {
         console.error('PDF Generation Error:', err);
         alert('Terjadi kesalahan saat membuat PDF: ' + err.message);
+    }
+}
+
+// --- PDF Save Helper (Browser + Android WebView) ---
+
+function savePdfDocument(doc, fileName) {
+    // Deteksi apakah berjalan di Android WebView dengan JavascriptInterface
+    if (window.Android && typeof window.Android.savePdf === 'function') {
+        try {
+            // Konversi PDF ke base64 lalu kirim ke Android
+            const base64 = doc.output('datauristring');
+            window.Android.savePdf(base64, fileName);
+        } catch (e) {
+            console.error('Android PDF save error:', e);
+            alert('Gagal menyimpan PDF di perangkat: ' + e.message);
+        }
+    } else {
+        // Browser biasa: download langsung
+        doc.save(fileName);
     }
 }
 
@@ -878,7 +897,7 @@ async function exportCekKasByMonth() {
         doc.text(`SALDO: ${formatRupiah(totalIn - totalOut)}`, 130, fy + 16);
 
         const suffix = selected === 'all' ? 'Semua' : selected.replace(' ', '_');
-        doc.save(`Cek_Kas_KT_${suffix}.pdf`);
+        savePdfDocument(doc, `Cek_Kas_KT_${suffix}.pdf`);
     } catch (err) {
         console.error(err);
         alert('Gagal membuat PDF: ' + err.message);
