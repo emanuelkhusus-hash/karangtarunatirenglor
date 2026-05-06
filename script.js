@@ -211,16 +211,21 @@ function renderAnnouncements(data) {
         announcementList.innerHTML = '<div class="empty-state"><p>Belum ada pengumuman.</p></div>';
         return;
     }
-    const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
+    const role = currentUser.jabatan.toLowerCase().trim();
+    const isAdmin = role === 'admin';
+    const canDeleteOwn = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
     announcementList.innerHTML = data.map((item, index) => {
         const dateDisplay = isNaN(item.hari) ? `${item.bulan} ${item.hari}` : `${item.hari} ${item.bulan}`;
+        const senderNama = item.pengirim_nama || item.nama || '';
+        const isOwner = senderNama.toLowerCase().trim() === currentUser.nama.toLowerCase().trim();
+        const showDelete = isAdmin || (canDeleteOwn && isOwner);
         return `
         <div class="announcement-item" style="animation-delay: ${index * 0.05}s" onclick="showDetail(${index})">
             <div class="item-header">
-                <span class="author">${item.pengirim_nama || item.nama || 'Anonim'} (${item.pengirim_jabatan || item.jabatan || 'Anggota'})</span>
+                <span class="author">${senderNama || 'Anonim'} (${item.pengirim_jabatan || item.jabatan || 'Anggota'})</span>
                 <div class="header-right">
                     <span class="date">${dateDisplay}</span>
-                    ${isAdmin ? `
+                    ${showDelete ? `
                         <button onclick="event.stopPropagation(); deletePost('${item.timestamp}')" class="btn-delete-post">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -372,15 +377,31 @@ async function changeRole(userId, newRole) {
 
 function updateFabContext(context) {
     const fab = document.getElementById('btn-add-post');
+    const wrapper = document.getElementById('admin-actions');
     const role = currentUser.jabatan.toLowerCase().trim();
     fab.setAttribute('data-context', context);
     if (context === 'announcement') {
         const canPost = ['admin', 'ketua', 'sekretaris', 'bendahara'].includes(role);
-        fab.classList.toggle('hidden', !canPost);
+        if (canPost) {
+            wrapper.classList.remove('hidden');
+            fab.classList.remove('hidden');
+        } else {
+            wrapper.classList.add('hidden');
+            fab.classList.add('hidden');
+        }
     } else if (context === 'finance') {
         const canPostFinance = ['admin', 'bendahara'].includes(role);
-        fab.classList.toggle('hidden', !canPostFinance);
-    } else { fab.classList.add('hidden'); }
+        if (canPostFinance) {
+            wrapper.classList.remove('hidden');
+            fab.classList.remove('hidden');
+        } else {
+            wrapper.classList.add('hidden');
+            fab.classList.add('hidden');
+        }
+    } else {
+        wrapper.classList.add('hidden');
+        fab.classList.add('hidden');
+    }
 }
 
 async function fetchFinance() {
