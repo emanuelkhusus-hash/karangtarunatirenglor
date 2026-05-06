@@ -326,7 +326,7 @@ function renderMembers(data) {
         member.jabatan.toLowerCase().includes(searchTerm)
     );
     document.getElementById('announcement-count').textContent = `${filteredData.length} Anggota`;
-    document.querySelector('.section-header h3').textContent = 'Daftar Anggota';
+    document.getElementById('announcement-list-header').textContent = 'Daftar Anggota';
     const isAdmin = currentUser.jabatan.toLowerCase().trim() === 'admin';
 
     const itemsHtml = filteredData.map((member, index) => `
@@ -597,9 +597,10 @@ function setupEventListeners() {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
                 document.getElementById('finance-section').classList.add('hidden');
+                document.getElementById('cek-kas-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.remove('hidden');
                 document.getElementById('member-search-container').classList.add('hidden');
-                document.querySelector('.section-header h3').textContent = 'Pengumuman Terbaru';
+                document.getElementById('announcement-list-header').textContent = 'Pengumuman Terbaru';
                 updateFabContext('announcement');
                 fetchAnnouncements();
             } else if (target === 'finance') {
@@ -804,13 +805,36 @@ function renderCekKas(data) {
     }).join('');
 }
 
-function exportCekKasByMonth() {
+async function exportCekKasByMonth() {
+    // Jika data belum dimuat, fetch dulu
+    if (!allFinance || allFinance.length === 0) {
+        const list = document.getElementById('cek-kas-list');
+        list.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat data untuk export...</p></div>';
+        try {
+            const response = await fetch(`${CONFIG.API_URL}?action=getFinance`);
+            const result = await response.json();
+            if (result.status === 'success') {
+                allFinance = result.data;
+                populateCekKasMonthFilter();
+                renderCekKas(allFinance);
+            } else {
+                alert('Gagal memuat data kas.'); return;
+            }
+        } catch (e) {
+            alert('Koneksi gagal, coba lagi.'); return;
+        }
+    }
+
     const selected = document.getElementById('cek-filter-month').value;
     const dataExport = selected === 'all' ? allFinance
         : allFinance.filter(i => extractMonthYear(i.tanggal) === selected);
 
-    if (!dataExport || dataExport.length === 0) { alert('Tidak ada data untuk di-export.'); return; }
-    if (!window.jspdf || !window.jspdf.jsPDF) { alert('Library PDF belum siap, coba lagi.'); return; }
+    if (!dataExport || dataExport.length === 0) {
+        alert('Tidak ada data untuk di-export pada periode ini.'); return;
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('Library PDF belum siap. Tunggu sebentar lalu coba lagi.'); return;
+    }
 
     try {
         const { jsPDF } = window.jspdf;
