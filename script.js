@@ -162,6 +162,16 @@ function showMainScreen() {
 
     const role = currentUser.jabatan.toLowerCase().trim();
     if (role === 'admin') checkNotifications();
+
+    // Sembunyikan tab KAS untuk selain Bendahara
+    const navFinance = document.querySelector('.nav-item[data-target="finance"]');
+    if (navFinance) {
+        if (role === 'bendahara') {
+            navFinance.classList.remove('hidden');
+        } else {
+            navFinance.classList.add('hidden');
+        }
+    }
     
     updateFabContext('announcement');
     fetchAnnouncements();
@@ -572,6 +582,12 @@ function setupEventListeners() {
                 updateFabContext('announcement');
                 fetchAnnouncements();
             } else if (target === 'finance') {
+                // Hanya Bendahara yang boleh mengakses KAS
+                const userRole = currentUser.jabatan.toLowerCase().trim();
+                if (userRole !== 'bendahara') {
+                    alert('Akses ditolak. Hanya Bendahara yang dapat mengakses menu Kas.');
+                    return;
+                }
                 document.getElementById('announcement-container').classList.add('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
                 document.getElementById('finance-section').classList.remove('hidden');
