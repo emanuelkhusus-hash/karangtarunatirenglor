@@ -168,7 +168,10 @@ function showMainScreen() {
                 <i class="fas fa-clock"></i>
                 <h3>Akun Menunggu Persetujuan</h3>
                 <p>Halo ${currentUser.nama}, pendaftaran Anda sedang diproses oleh Admin.</p>
-                <button onclick="checkStatusManual(this)" class="btn-primary">Cek Status Terbaru</button>
+                <div style="display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 300px; margin: 0 auto;">
+                    <button onclick="checkStatusManual(this)" class="btn-primary">Cek Status Terbaru</button>
+                    <button onclick="logout()" class="btn-reject-outline">Keluar</button>
+                </div>
             </div>
         `;
         document.getElementById('display-role').textContent = 'Pending Approval';
@@ -404,6 +407,42 @@ async function changeRole(userId, newRole) {
     } catch (e) { alert('Gagal.'); }
 }
 
+async function handleAddMember(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    const payload = {
+        action: 'addMember',
+        nama: document.getElementById('add-member-name').value,
+        jabatan: document.getElementById('add-member-role').value,
+        password: document.getElementById('add-member-password').value,
+        status: 'aktif' // Admin adds directly as active
+    };
+
+    try {
+        const response = await fetch(CONFIG.API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload) 
+        });
+        const result = await response.json();
+        if (result.status === 'success') {
+            alert('Anggota baru berhasil ditambahkan!');
+            closeModal();
+            fetchMembers();
+            e.target.reset();
+        } else {
+            alert('Gagal: ' + result.message);
+        }
+    } catch (error) {
+        alert('Terjadi kesalahan koneksi.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Simpan Anggota';
+    }
+}
+
 // --- Finance Functions ---
 
 function updateFabContext(context) {
@@ -423,6 +462,14 @@ function updateFabContext(context) {
     } else if (context === 'finance') {
         const canPostFinance = ['admin', 'bendahara'].includes(role);
         if (canPostFinance) {
+            wrapper.classList.remove('hidden');
+            fab.classList.remove('hidden');
+        } else {
+            wrapper.classList.add('hidden');
+            fab.classList.add('hidden');
+        }
+    } else if (context === 'members') {
+        if (role === 'admin') {
             wrapper.classList.remove('hidden');
             fab.classList.remove('hidden');
         } else {
@@ -633,6 +680,7 @@ function setupEventListeners() {
     btnLogout.addEventListener('click', logout);
     document.getElementById('post-form').addEventListener('submit', handlePost);
     document.getElementById('finance-form').addEventListener('submit', handleFinancePost);
+    document.getElementById('add-member-form').addEventListener('submit', handleAddMember);
     
     bottomNavItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -674,7 +722,7 @@ function setupEventListeners() {
                 document.getElementById('cek-kas-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.remove('hidden');
-                updateFabContext('none');
+                updateFabContext('members');
                 fetchMembers();
             } else if (target === 'profile') {
                 document.getElementById('announcement-container').classList.add('hidden');
@@ -695,6 +743,7 @@ function setupEventListeners() {
     document.getElementById('btn-add-post').onclick = () => {
         const context = document.getElementById('btn-add-post').getAttribute('data-context');
         if (context === 'finance') openModal('modal-finance');
+        else if (context === 'members') openModal('modal-add-member');
         else openModal('modal-post');
     };
     document.querySelectorAll('.btn-close').forEach(btn => btn.onclick = closeModal);

@@ -36,7 +36,7 @@
                         <label for="reg-name">Nama Lengkap</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user"></i>
-                            <input type="text" id="reg-name" placeholder="Masukkan nama lengkap..." required>
+                            <input type="text" id="reg-name" placeholder="Masukkan nama..." required>
                         </div>
                     </div>
                     <div class="input-group">
@@ -47,8 +47,8 @@
                         </div>
                     </div>
                     <button type="submit" id="btn-login" class="btn-primary">
-                        <span>Masuk / Daftar</span>
-                        <i class="fas fa-arrow-right"></i>
+                        <span>Masuk ke Sistem</span>
+                        <i class="fas fa-sign-in-alt"></i>
                     </button>
                 </form>
 
@@ -317,6 +317,38 @@
                         <input type="text" id="finance-note" placeholder="Contoh: Iuran Bulanan atau Beli Konsumsi" required>
                     </div>
                     <button type="submit" class="btn-primary full-width">Simpan Transaksi</button>
+                </form>
+            </div>
+
+            <!-- Modal Add Member -->
+            <div id="modal-add-member" class="modal-content">
+                <div class="modal-header">
+                    <h3>Tambah Anggota Baru</h3>
+                    <button class="btn-close">&times;</button>
+                </div>
+                <form id="add-member-form">
+                    <div class="input-group">
+                        <label>Nama Lengkap Anggota</label>
+                        <input type="text" id="add-member-name" placeholder="Tulis nama lengkap..." required>
+                    </div>
+                    <div class="input-group">
+                        <label>Jabatan</label>
+                        <select id="add-member-role" class="full-width-select" required>
+                            <option value="Anggota">Anggota</option>
+                            <option value="Ketua">Ketua</option>
+                            <option value="Sekretaris">Sekretaris</option>
+                            <option value="Bendahara">Bendahara</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Password Akun</label>
+                        <input type="text" id="add-member-password" placeholder="Tulis password akun..." required>
+                    </div>
+                    <div class="info-note" style="margin-bottom: 15px; font-size: 0.8rem; color: var(--text-muted);">
+                        <i class="fas fa-info-circle"></i> Anggota yang ditambahkan akan langsung berstatus <b>Aktif</b>.
+                    </div>
+                    <button type="submit" class="btn-primary full-width">Simpan Anggota</button>
                 </form>
             </div>
         </div> <!-- End of modal-overlay -->
