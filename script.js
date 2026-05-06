@@ -126,23 +126,27 @@ async function handleAuth(e) {
     const password = document.getElementById('login-id').value;
     const btn = document.getElementById('btn-login');
     const originalText = btn.innerHTML;
+    
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner small"></div>';
+    btn.innerHTML = '<div class="spinner small"></div> Checking...';
+    
     try {
         const response = await fetch(CONFIG.API_URL, {
             method: 'POST',
             body: JSON.stringify({ action: 'login', nama: name, password: password })
         });
         const result = await response.json();
+        
         if (result.status === 'success') {
             currentUser = { ...result.data, password: password };
             localStorage.setItem('kt_user', JSON.stringify(currentUser));
             showMainScreen();
         } else {
-            alert('Gagal login: ' + result.message);
+            // Tampilkan pesan error yang spesifik dari server
+            alert('Akses Ditolak: ' + (result.message || 'Nama atau Password tidak terdaftar!'));
         }
     } catch (error) {
-        alert('Terjadi kesalahan koneksi ke server.');
+        alert('Terjadi kesalahan koneksi ke server. Pastikan Anda terhubung ke internet.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
