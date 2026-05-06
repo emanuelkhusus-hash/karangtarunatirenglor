@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karang Taruna Hub - Aplikasi Pengumuman</title>
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=10">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
@@ -167,7 +167,53 @@
                         <!-- Finance items injected here -->
                     </div>
                 </div>
-            </main>
+
+                <!-- Cek KAS Section (Read-Only: Admin, Ketua, Sekretaris, Anggota) -->
+                <div id="cek-kas-section" class="hidden">
+                    <!-- Saldo Ringkasan -->
+                    <div class="cek-balance-card">
+                        <div class="cek-balance-header">
+                            <i class="fas fa-landmark"></i>
+                            <span>Kas Karang Taruna</span>
+                        </div>
+                        <h2 id="cek-total-balance">Rp 0</h2>
+                        <div class="cek-balance-sub">
+                            <div class="cek-sub-item income">
+                                <i class="fas fa-arrow-circle-down"></i>
+                                <div>
+                                    <small>Total Masuk</small>
+                                    <span id="cek-total-income">Rp 0</span>
+                                </div>
+                            </div>
+                            <div class="cek-sub-item expense">
+                                <i class="fas fa-arrow-circle-up"></i>
+                                <div>
+                                    <small>Total Keluar</small>
+                                    <span id="cek-total-expense">Rp 0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Filter & Export -->
+                    <div class="cek-filter-row">
+                        <div class="select-wrapper" style="flex:1">
+                            <i class="fas fa-calendar-alt"></i>
+                            <select id="cek-filter-month" onchange="applyCekKasFilter()">
+                                <option value="all">Semua Bulan</option>
+                            </select>
+                        </div>
+                        <button onclick="exportCekKasByMonth()" class="btn-export">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                    </div>
+                    <!-- List -->
+                    <div class="section-header">
+                        <h3>Riwayat Transaksi</h3>
+                        <span id="cek-kas-count">0 Transaksi</span>
+                    </div>
+                    <div id="cek-kas-list" class="list-wrapper cek-kas-list"></div>
+                </div>
+             </main>
 
             <!-- Bottom Actions (Floating Button for Admin) -->
             <div id="admin-actions" class="hidden">
@@ -182,9 +228,9 @@
                     <i class="fas fa-home"></i>
                     <span>Beranda</span>
                 </button>
-                <button class="nav-item" data-target="finance">
-                    <i class="fas fa-wallet"></i>
-                    <span>Kas</span>
+                <button class="nav-item" id="nav-finance" data-target="finance">
+                    <i class="fas fa-wallet" id="nav-finance-icon"></i>
+                    <span id="nav-finance-label">Kas</span>
                 </button>
                 <button class="nav-item" id="nav-members" data-target="members">
                     <i class="fas fa-address-book"></i>
@@ -268,7 +314,7 @@
         </div> <!-- End of modal-overlay -->
     </div> <!-- End of app -->
 
-        <script src="script.js?v=8"></script>
+        <script src="script.js?v=10"></script>
 </body>
 
 </html>

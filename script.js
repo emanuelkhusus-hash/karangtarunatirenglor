@@ -43,12 +43,28 @@ async function checkSession() {
     const savedUser = localStorage.getItem('kt_user');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
-        if (currentUser.status === 'pending') {
-            await refreshUserStatus();
-        }
+        // Tampilkan layar utama segera dari cache (cepat)
         showMainScreen();
+        // Lalu refresh data dari server di background (tanpa perlu logout)
+        silentRefresh();
     } else {
         showAuthScreen();
+    }
+}
+
+async function silentRefresh() {
+    const oldJabatan = currentUser?.jabatan;
+    const oldStatus = currentUser?.status;
+    const result = await refreshUserStatus();
+    if (!result || result.status !== 'success') return;
+
+    const newJabatan = currentUser?.jabatan;
+    const newStatus = currentUser?.status;
+
+    // Jika ada perubahan jabatan atau status, perbarui UI secara otomatis
+    if (oldJabatan !== newJabatan || oldStatus !== newStatus) {
+        console.log(`[SilentRefresh] Perubahan terdeteksi: jabatan ${oldJabatan} → ${newJabatan}, status ${oldStatus} → ${newStatus}`);
+        showMainScreen();
     }
 }
 
@@ -163,13 +179,18 @@ function showMainScreen() {
     const role = currentUser.jabatan.toLowerCase().trim();
     if (role === 'admin') checkNotifications();
 
-    // Sembunyikan tab KAS untuk selain Bendahara
-    const navFinance = document.querySelector('.nav-item[data-target="finance"]');
-    if (navFinance) {
+    // Tab KAS: tampil untuk semua, beda label per role
+    const navFinance = document.getElementById('nav-finance');
+    const navIcon = document.getElementById('nav-finance-icon');
+    const navLabel = document.getElementById('nav-finance-label');
+    if (navFinance && navIcon && navLabel) {
+        navFinance.classList.remove('hidden');
         if (role === 'bendahara') {
-            navFinance.classList.remove('hidden');
+            navIcon.className = 'fas fa-wallet';
+            navLabel.textContent = 'Kas';
         } else {
-            navFinance.classList.add('hidden');
+            navIcon.className = 'fas fa-chart-line';
+            navLabel.textContent = 'Cek Kas';
         }
     }
     
@@ -582,23 +603,27 @@ function setupEventListeners() {
                 updateFabContext('announcement');
                 fetchAnnouncements();
             } else if (target === 'finance') {
-                // Hanya Bendahara yang boleh mengakses KAS
                 const userRole = currentUser.jabatan.toLowerCase().trim();
-                if (userRole !== 'bendahara') {
-                    alert('Akses ditolak. Hanya Bendahara yang dapat mengakses menu Kas.');
-                    return;
-                }
                 document.getElementById('announcement-container').classList.add('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
-                document.getElementById('finance-section').classList.remove('hidden');
+                document.getElementById('finance-section').classList.add('hidden');
+                document.getElementById('cek-kas-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.add('hidden');
-                updateFabContext('finance');
-                fetchFinance();
+                if (userRole === 'bendahara') {
+                    document.getElementById('finance-section').classList.remove('hidden');
+                    updateFabContext('finance');
+                    fetchFinance();
+                } else {
+                    document.getElementById('cek-kas-section').classList.remove('hidden');
+                    updateFabContext('none');
+                    fetchCekKas();
+                }
             } else if (target === 'members') {
                 document.getElementById('announcement-container').classList.remove('hidden');
                 document.getElementById('profile-section').classList.add('hidden');
                 document.getElementById('finance-section').classList.add('hidden');
+                document.getElementById('cek-kas-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.remove('hidden');
                 updateFabContext('none');
@@ -607,6 +632,7 @@ function setupEventListeners() {
                 document.getElementById('announcement-container').classList.add('hidden');
                 document.getElementById('profile-section').classList.remove('hidden');
                 document.getElementById('finance-section').classList.add('hidden');
+                document.getElementById('cek-kas-section').classList.add('hidden');
                 document.querySelector('.filter-bar').classList.add('hidden');
                 document.getElementById('member-search-container').classList.add('hidden');
                 updateFabContext('none');
@@ -695,4 +721,142 @@ function showDetail(index) {
     document.getElementById('detail-title').textContent = item.judul;
     document.getElementById('detail-body').textContent = item.isi;
     openModal('modal-detail');
+}
+
+// --- Cek KAS (Read-Only View) ---
+
+function extractMonthYear(tanggal) {
+    if (!tanggal) return null;
+    const parts = String(tanggal).trim().split(' ');
+    if (parts.length >= 3) return `${parts[1]} ${parts[2]}`;
+    return tanggal;
+}
+
+async function fetchCekKas() {
+    const list = document.getElementById('cek-kas-list');
+    list.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Memuat data kas...</p></div>';
+    try {
+        const response = await fetch(`${CONFIG.API_URL}?action=getFinance`);
+        const result = await response.json();
+        if (result.status === 'success') {
+            allFinance = result.data;
+            populateCekKasMonthFilter();
+            renderCekKas(allFinance);
+        } else {
+            list.innerHTML = '<p class="error-msg">Gagal memuat data kas.</p>';
+        }
+    } catch (e) {
+        list.innerHTML = '<p class="error-msg">Koneksi gagal.</p>';
+    }
+}
+
+function populateCekKasMonthFilter() {
+    const select = document.getElementById('cek-filter-month');
+    if (!select) return;
+    const unique = [...new Set(allFinance.map(i => extractMonthYear(i.tanggal)).filter(Boolean))];
+    select.innerHTML = '<option value="all">Semua Bulan</option>';
+    unique.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        select.appendChild(opt);
+    });
+}
+
+function applyCekKasFilter() {
+    const selected = document.getElementById('cek-filter-month').value;
+    const filtered = selected === 'all' ? allFinance
+        : allFinance.filter(i => extractMonthYear(i.tanggal) === selected);
+    renderCekKas(filtered);
+}
+
+function renderCekKas(data) {
+    const list = document.getElementById('cek-kas-list');
+    document.getElementById('cek-kas-count').textContent = `${data.length} Transaksi`;
+
+    // Saldo selalu dari SEMUA data (bukan yang difilter)
+    let totalIn = 0, totalOut = 0;
+    allFinance.forEach(item => {
+        const amt = parseInt(item.jumlah) || 0;
+        if (item.jenis === 'income') totalIn += amt; else totalOut += amt;
+    });
+    document.getElementById('cek-total-income').textContent = formatRupiah(totalIn);
+    document.getElementById('cek-total-expense').textContent = formatRupiah(totalOut);
+    document.getElementById('cek-total-balance').textContent = formatRupiah(totalIn - totalOut);
+
+    if (data.length === 0) {
+        list.innerHTML = '<div class="empty-state"><p>Tidak ada transaksi pada periode ini.</p></div>';
+        return;
+    }
+    list.innerHTML = [...data].reverse().map((item, index) => {
+        const amt = parseInt(item.jumlah) || 0;
+        return `
+        <div class="finance-item ${item.jenis}" style="animation-delay:${index * 0.04}s">
+            <div class="finance-info">
+                <h4>${item.keterangan}</h4>
+                <p>Oleh: ${item.nama}</p>
+                <p class="trans-time"><i class="fas fa-clock"></i> ${item.tanggal || '-'}</p>
+            </div>
+            <div class="finance-amount">
+                <span class="amount-val">${item.jenis === 'income' ? '+' : '-'}${formatRupiah(amt)}</span>
+                <span class="finance-date tag-${item.jenis}">${item.jenis === 'income' ? 'Masuk' : 'Keluar'}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function exportCekKasByMonth() {
+    const selected = document.getElementById('cek-filter-month').value;
+    const dataExport = selected === 'all' ? allFinance
+        : allFinance.filter(i => extractMonthYear(i.tanggal) === selected);
+
+    if (!dataExport || dataExport.length === 0) { alert('Tidak ada data untuk di-export.'); return; }
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('Library PDF belum siap, coba lagi.'); return; }
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
+        const periodLabel = selected === 'all' ? 'Semua Periode' : selected;
+
+        doc.setFontSize(18); doc.setTextColor(30, 58, 138);
+        doc.text('LAPORAN KAS KARANG TARUNA', 105, 20, { align:'center' });
+        doc.setFontSize(10); doc.setTextColor(100, 116, 139);
+        doc.text('Watuireng Lor, Desa Platarejo', 105, 28, { align:'center' });
+        doc.text(`Periode: ${periodLabel}`, 105, 34, { align:'center' });
+        doc.text(`Dicetak: ${dateStr}`, 105, 40, { align:'center' });
+        doc.setLineWidth(0.5); doc.setDrawColor(30, 58, 138);
+        doc.line(20, 46, 190, 46);
+
+        let totalIn = 0, totalOut = 0;
+        const rows = dataExport.map((item, i) => {
+            const amt = parseInt(item.jumlah) || 0;
+            if (item.jenis === 'income') totalIn += amt; else totalOut += amt;
+            return [i+1, item.tanggal || '-', item.keterangan, item.nama,
+                item.jenis === 'income' ? formatRupiah(amt) : '-',
+                item.jenis === 'expense' ? formatRupiah(amt) : '-'];
+        });
+
+        doc.autoTable({
+            startY: 52,
+            head: [['No', 'Waktu Transaksi', 'Keterangan', 'Oleh', 'Masuk', 'Keluar']],
+            body: rows, theme: 'striped',
+            headStyles: { fillColor: [30, 58, 138] },
+            styles: { fontSize: 8 },
+            columnStyles: { 4: { halign:'right' }, 5: { halign:'right' } }
+        });
+
+        const fy = (doc.lastAutoTable?.finalY || 52) + 12;
+        doc.setFontSize(10); doc.setTextColor(0);
+        doc.text(`Total Pemasukan : ${formatRupiah(totalIn)}`, 130, fy);
+        doc.text(`Total Pengeluaran: ${formatRupiah(totalOut)}`, 130, fy + 7);
+        doc.setFontSize(12); doc.setFont(undefined, 'bold'); doc.setTextColor(30, 58, 138);
+        doc.text(`SALDO: ${formatRupiah(totalIn - totalOut)}`, 130, fy + 16);
+
+        const suffix = selected === 'all' ? 'Semua' : selected.replace(' ', '_');
+        doc.save(`Cek_Kas_KT_${suffix}.pdf`);
+    } catch (err) {
+        console.error(err);
+        alert('Gagal membuat PDF: ' + err.message);
+    }
 }
